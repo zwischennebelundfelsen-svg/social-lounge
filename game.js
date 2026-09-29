@@ -1,5 +1,5 @@
 import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js";
-const canvas=document.querySelector("#game"),renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+const canvas=document.querySelector("#game"),renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;
 
 const scene=new THREE.Scene();scene.background=new THREE.Color(0x080a0f);scene.fog=new THREE.Fog(0x080a0f,10,38);const camera=new THREE.PerspectiveCamera(70,2,.1,100);camera.position.set(0,1.7,7);
 const mat=(c,r=.7,m=.05)=>new THREE.MeshStandardMaterial({color:c,roughness:r,metalness:m});function box(x,y,z,w,h,d,c,r=.7,m=.05){let o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat(c,r,m));o.position.set(x,y,z);o.castShadow=o.receiveShadow=true;scene.add(o);return o}
@@ -15,6 +15,14 @@ for(const z of [-9,-4,2,8]){torch(-11.72,2.35,z,1);torch(11.72,2.35,z,-1)}
 // Softer visual pass: rounded bar front, stools and tabletops
 rounded(0,.95,-7.42,10.2,1.25,.72,.28,0x3b2118,.42,.08);for(let x=-4;x<=4;x+=2){const seat=new THREE.Mesh(new THREE.CylinderGeometry(.47,.47,.18,24),mat(0x4b2c27,.65,.04));seat.position.set(x,.58,-6.4);seat.castShadow=true;scene.add(seat)}
 for(const [x,z] of [[-7,1],[-7,-4],[7,1],[7,-4]]){const top=new THREE.Mesh(new THREE.CylinderGeometry(1.35,1.35,.13,32),mat(0x452a1d,.5,.06));top.scale.z=.62;top.position.set(x,.8,z);top.castShadow=top.receiveShadow=true;scene.add(top)}
+// More realistic architectural detail without heavy assets
+for(const x of [-10.7,10.7])for(const z of [-11,-5,1,7,13]){const col=new THREE.Mesh(new THREE.CylinderGeometry(.22,.26,4.15,20),mat(0x242127,.55,.12));col.position.set(x,2.05,z);col.castShadow=true;scene.add(col)}
+for(const z of [-12,-6,0,6,12]){box(0,4.34,z,22.8,.12,.16,0x33251f,.42,.16)}
+function plant(x,z){const pot=new THREE.Mesh(new THREE.CylinderGeometry(.34,.26,.55,20),mat(0x302b2a,.7,.06));pot.position.set(x,.28,z);scene.add(pot);for(let i=0;i<9;i++){const leaf=new THREE.Mesh(new THREE.SphereGeometry(.22,12,8),mat(0x24452f,.82,.01));const a=i/9*Math.PI*2;leaf.scale.set(.45,1.8,.28);leaf.rotation.z=(i%2?.5:-.5);leaf.position.set(x+Math.cos(a)*.22,.78+(i%3)*.1,z+Math.sin(a)*.22);scene.add(leaf)}}
+plant(-9.6,10.8);plant(9.6,10.8);plant(-9.5,-10.8);plant(9.5,-10.8);
+for(const x of [-7,-3.5,0,3.5,7]){const shade=new THREE.Mesh(new THREE.CylinderGeometry(.18,.34,.32,24,1,true),mat(0x3a2a20,.35,.35));shade.position.set(x,3.55,-6.2);scene.add(shade);const bulb=new THREE.PointLight(0xffb05c,7,5,2);bulb.position.set(x,3.35,-6.2);scene.add(bulb)}
+// bottle silhouettes add depth behind the bar
+for(let i=0;i<18;i++){const x=-4.5+i*.53;const h=.38+(i%4)*.08;const bottle=new THREE.Mesh(new THREE.CylinderGeometry(.07,.09,h,12),mat([0x4b2d1e,0x274a35,0x5b4724][i%3],.35,.08));bottle.position.set(x,1.78+h/2,-8.28);scene.add(bottle)}
 // Large, immediately visible Social Lounge TV + lounge area
 box(0,2.35,1.25,7.7,4.25,.28,0x050609,.18,.55); // TV frame
 box(0,2.35,1.08,7.15,3.7,.08,0x0a0d15,.1,.2);   // screen glass
@@ -28,14 +36,8 @@ function placeYT(){if(yt.style.display==="none")return;const pts=[new THREE.Vect
 function drawTVStatus(title="SOCIAL LOUNGE TV",sub="E  •  YOUTUBE ÖFFNEN"){tc.clearRect(0,0,1280,720);tc.fillStyle=grad;tc.fillRect(0,0,1280,720);tc.textAlign="center";tc.fillStyle="#f0b44b";tc.font="bold 82px Arial";tc.fillText(title,640,285);tc.fillStyle="#ffffff";tc.font="38px Arial";tc.fillText(sub,640,370);tc.fillStyle="#8b91a5";tc.font="25px Arial";tc.fillText("Watch • Chill • Together",640,430);tvTex.needsUpdate=true}const tvFace=new THREE.Mesh(new THREE.PlaneGeometry(7.05,3.6),new THREE.MeshBasicMaterial({map:tvTex}));tvFace.position.set(0,2.35,1.405);scene.add(tvFace);
 box(-3.65,.32,1.25,.18,.65,.8,0x16171d,.3,.5);box(3.65,.32,1.25,.18,.65,.8,0x16171d,.3,.5);
 const tvGlow=new THREE.PointLight(0x537bff,24,9,2);tvGlow.position.set(0,2.5,3.2);scene.add(tvGlow);
-function sofaFacingTV(x,z){const g=new THREE.Group();function part(px,py,pz,w,h,d,col){const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat(col,.82,.02));o.position.set(px,py,pz);o.castShadow=o.receiveShadow=true;g.add(o)}
-part(0,.42,0,2.8,.42,1.15,0x35262d);          // seat
-part(0,1.02,.52,2.8,1.05,.24,0x49313b);       // BACK: +Z, away from TV
-part(-1.34,.68,.02,.24,.7,1.12,0x49313b);     // arm
-part(1.34,.68,.02,.24,.7,1.12,0x49313b);      // arm
-part(0,.31,-.55,2.45,.16,.08,0x22181e);       // FRONT: -Z, toward TV
-g.position.set(x,0,z);scene.add(g)}
-sofaFacingTV(-2.0,8.4);sofaFacingTV(2.0,8.4);box(0,.32,5.9,2.1,.42,1.15,0x3a241b,.5,.08);box(0,.05,7.1,7.4,.04,4.8,0x291b24);
+function standingTable(x,z){const top=new THREE.Mesh(new THREE.CylinderGeometry(.72,.72,.09,40),mat(0x40291e,.32,.16));top.position.set(x,1.08,z);top.castShadow=top.receiveShadow=true;scene.add(top);const stem=new THREE.Mesh(new THREE.CylinderGeometry(.075,.1,.98,20),mat(0x292b30,.22,.72));stem.position.set(x,.56,z);stem.castShadow=true;scene.add(stem);const base=new THREE.Mesh(new THREE.CylinderGeometry(.38,.44,.07,28),mat(0x202126,.25,.72));base.position.set(x,.07,z);base.receiveShadow=true;scene.add(base);const rim=new THREE.Mesh(new THREE.TorusGeometry(.7,.025,10,40),mat(0xc68a43,.2,.75));rim.rotation.x=Math.PI/2;rim.position.set(x,1.135,z);scene.add(rim)}
+standingTable(-2.5,7.3);standingTable(0,8.2);standingTable(2.5,7.3);standingTable(-1.35,5.5);standingTable(1.35,5.5);box(0,.035,7.1,7.8,.035,5.5,0x211b20,.82,.02);
 let coins=Number(localStorage.getItem("slcoins")||50),coinEl=document.querySelector("#coins");coinEl.textContent=coins;const keys={},start=document.querySelector("#start"),intro=document.querySelector("#intro"),menu=document.querySelector("#menu"),tvPanel=document.querySelector("#tvPanel"),prompt=document.querySelector("#prompt"),cross=document.querySelector("#crosshair");let active=false,yaw=0,pitch=0,last=performance.now(),earn=0;
 start.onclick=()=>{intro.classList.add("hidden");canvas.requestPointerLock()};document.addEventListener("pointerlockchange",()=>{active=document.pointerLockElement===canvas;cross.style.display=active?"block":"none"});document.addEventListener("mousemove",e=>{if(!active)return;yaw-=e.movementX*.0022;pitch=Math.max(-1.3,Math.min(1.3,pitch-e.movementY*.0022))});
 function nearBar(){return camera.position.z<-5.2&&Math.abs(camera.position.x)<6}function nearTV(){return Math.abs(camera.position.x)<4.6&&camera.position.z>2.0&&camera.position.z<5.4}function openTV(){document.exitPointerLock();tvPanel.classList.remove("hidden")}function closeTV(){tvPanel.classList.add("hidden");canvas.requestPointerLock()}
