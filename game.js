@@ -23,14 +23,19 @@ function recthit(a,b){return a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y}
 function init(){
  startAudio();musicTimer=0;lastBiome=-1;
  D=+document.querySelector("#difficulty").value;const h=H[chosen];
- G={t:0,cam:0,coins:0,kills:0,crystals:0,quest:0,done:false,extraction:false,shots:[],enemies:[],parts:[],pickups:[],platforms:[],traps:[],chests:[],npcs:[],doors:[],keysFound:0,boss:null,player:{x:90,y:400,w:34,h:52,vx:0,vy:0,on:false,hp:h.hp,max:h.hp,lastShot:0,lastSkill:-9,inv:0,face:1},hero:h};
+ G={t:0,cam:0,coins:0,kills:0,crystals:0,quest:0,done:false,extraction:false,shots:[],enemies:[],parts:[],pickups:[],platforms:[],traps:[],chests:[],npcs:[],doors:[],keysFound:0,boss:null,riddle:null,riddlesDone:0,player:{x:90,y:400,w:34,h:52,vx:0,vy:0,on:false,hp:h.hp,max:h.hp,lastShot:0,lastSkill:-9,inv:0,face:1},hero:h};
  const p=G.platforms;p.push({x:-200,y:610,w:900,h:120},{x:760,y:565,w:360,h:165},{x:1190,y:620,w:520,h:110},{x:1800,y:535,w:430,h:195},{x:2320,y:610,w:620,h:120},{x:3040,y:550,w:390,h:180},{x:3510,y:620,w:850,h:110},{x:4460,y:545,w:430,h:185},{x:4990,y:610,w:1100,h:120});
  [[390,480,180,20],[880,420,170,20],[1370,455,170,20],[1930,385,180,20],[2480,450,180,20],[3180,390,160,20],[3710,460,190,20],[4100,360,160,20],[4580,410,170,20],[5290,430,180,20]].forEach(a=>p.push({x:a[0],y:a[1],w:a[2],h:a[3]}));
  [710,1135,1720,2250,2960,3440,4380,4910].forEach(v=>G.traps.push({x:v,y:600,w:55,h:25}));
  // Continuous themed regions: jungle -> desert -> mountains
  G.npcs.push({x:210,y:555,name:"Milo",text:"Der Dschungel verschluckt jeden unvorsichtigen Jäger."},{x:2180,y:480,name:"Rashid",text:"Hinter den Dünen liegen alte Kammern."},{x:4240,y:565,name:"Eira",text:"Im Gebirge wartet etwas in der Höhle."});
  G.chests.push({x:560,y:440,open:false},{x:1540,y:580,open:false},{x:2700,y:410,open:false},{x:3380,y:510,open:false},{x:4720,y:505,open:false},{x:5480,y:390,open:false});
- G.doors.push({x:1960,y:475,w:55,h:60,kind:"temple",locked:true},{x:4620,y:485,w:70,h:60,kind:"cave",locked:false});
+ G.doors.push({x:1960,y:475,w:55,h:60,kind:"temple",locked:true},{x:4620,y:485,w:70,h:60,kind:"cave",locked:true});
+ G.riddleStations=[
+ {x:1830,done:false,q:"Drei Runen leuchten in dieser Reihenfolge: Mond, Sonne, Mond, Sonne, Mond. Welche Rune muss als Nächstes aktiviert werden?",a:["Mond","Sonne","Stern"],correct:2},
+ {x:3650,done:false,q:"Ein Wächter sagt: Nur eine Aussage ist wahr. A: Der Schlüssel liegt links. B: Der Schlüssel liegt nicht links. C: Aussage B ist falsch. Welche Antwort kann allein wahr sein?",a:["A","B","C"],correct:2},
+ {x:4510,done:false,q:"Eine Fackel brennt 60 Minuten. Zwei identische Fackeln werden gleichzeitig entzündet. Wie lange leuchtet mindestens eine von ihnen?",a:["30 Minuten","60 Minuten","120 Minuten"],correct:2}
+ ];
  G.pickups.push({x:980,y:380,r:11,type:"key",alive:true},{x:1680,y:560,r:11,type:"key",alive:true});
  [[4080,500,130,18],[4300,410,145,18],[4520,330,125,18],[4770,405,160,18],[5050,325,135,18],[5320,470,150,18]].forEach(a=>p.push({x:a[0],y:a[1],w:a[2],h:a[3]}));
  for(let i=0;i<16;i++)spawnEnemy(520+i*320,rnd(320,510),i%5===0?"wraith":"hound");
@@ -52,7 +57,10 @@ function skill(){
  else{p.inv=1.2;p.hp=Math.min(p.max,p.hp+30);G.rage=2.8;toast("BERSERKER")}
 }
 function update(dt){
- const g=G,p=g.player,h=g.hero;g.t+=dt;ambience(g);p.inv=Math.max(0,p.inv-dt);if(G.rage)G.rage=Math.max(0,G.rage-dt);
+ const g=G,p=g.player,h=g.hero;g.t+=dt;ambience(g);
+ // Giana-Sisters-inspired progression: movement challenges lead into self-contained puzzle gates.
+ if(!g.riddle){for(const r of g.riddleStations||[])if(!r.done&&Math.abs(p.x-r.x)<70){g.riddle=r;toast("Rätsel entdeckt – antworte mit 1, 2 oder 3.");break}}
+ if(g.riddle){let pick=keys["1"]?1:keys["2"]?2:keys["3"]?3:0;if(pick){keys[String(pick)]=false;if(pick===g.riddle.correct){g.riddle.done=true;g.riddlesDone++;g.coins+=20;toast("Richtig! Der Weg reagiert auf deine Lösung.");g.riddle=null;if(g.riddlesDone>=1){let d=g.doors.find(v=>v.kind==="temple");if(d)d.locked=false}if(g.riddlesDone>=3){let d=g.doors.find(v=>v.kind==="cave");if(d)d.locked=false}}else{toast("Falsch. Beobachte die Hinweise und versuche es erneut.");p.hp=Math.max(1,p.hp-12);}}}p.inv=Math.max(0,p.inv-dt);if(G.rage)G.rage=Math.max(0,G.rage-dt);
  let dir=(keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0);p.vx+=(dir*h.speed-p.vx)*Math.min(1,dt*10);if(dir)p.face=dir;
  if((keys.w||keys.arrowup||keys[" "])&&p.on){p.vy=-h.jump;p.on=false} if(keys.shift)skill();if(pointer.down||keys.f)shoot();
  p.vy+=1500*dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.on=false;
@@ -78,6 +86,8 @@ function draw(){
  const g=G,p=g.player,W=C.width,Hh=C.height;x.clearRect(0,0,W,Hh);
  let grd=x.createLinearGradient(0,0,0,Hh);grd.addColorStop(0,"#111827");grd.addColorStop(.55,"#202735");grd.addColorStop(1,"#090b0f");x.fillStyle=grd;x.fillRect(0,0,W,Hh);
  x.globalAlpha=.18;for(let i=0;i<18;i++){let px=((i*173-g.cam*.18)%1500+1500)%1500;x.fillStyle="#9fa9ba";x.beginPath();x.arc(px,140+(i%5)*54,80+i%3*35,0,7);x.fill()}x.globalAlpha=1;
+ // full-width readable riddle panel
+ if(g.riddle){let r=g.riddle;x.save();x.fillStyle="rgba(9,13,20,.94)";x.beginPath();x.roundRect(70,28,W-140,150,22);x.fill();x.strokeStyle="rgba(210,190,130,.55)";x.lineWidth=2;x.stroke();x.fillStyle="#f5f1e8";x.font="700 17px system-ui";let words=r.q.split(" "),lines=[""];for(const w of words){let i=lines.length-1,t=(lines[i]+" "+w).trim();if(x.measureText(t).width>W-200)lines.push(w);else lines[i]=t}lines.forEach((v,i)=>x.fillText(v,95,62+i*23));x.font="600 15px system-ui";r.a.forEach((v,i)=>x.fillText((i+1)+": "+v,105+i*((W-210)/3),142));x.fillStyle="#b8c1cc";x.font="12px system-ui";x.fillText("Drücke 1, 2 oder 3 für deine Antwort.",95,166);x.restore()}
  x.save();x.translate(-g.cam,0);
  // biome scenery and seamless region transitions
  for(let wx=0;wx<6000;wx+=180){
@@ -100,7 +110,7 @@ function draw(){
  // temple door and cave mouth
  for(const d of g.doors){x.fillStyle=d.kind==="cave"?"#080b10":"#584936";x.beginPath();x.roundRect(d.x,d.y,d.w,d.h,18,18);x.fill();x.strokeStyle=d.kind==="cave"?"#737f8e":"#c39b58";x.lineWidth=4;x.stroke()}
 
- for(const q of g.platforms){x.fillStyle="#252b31";x.fillRect(q.x,q.y,q.w,q.h);x.fillStyle="#3e493f";x.fillRect(q.x,q.y,q.w,8);x.fillStyle="#171b20";for(let k=q.x+20;k<q.x+q.w;k+=70)x.fillRect(k,q.y+22,3,45)}
+ for(const q of g.platforms){let pg=x.createLinearGradient(q.x,q.y,q.x,q.y+q.h);pg.addColorStop(0,"#4b5553");pg.addColorStop(.18,"#303b39");pg.addColorStop(1,"#151a1f");x.fillStyle=pg;x.beginPath();x.roundRect(q.x,q.y,q.w,q.h,Math.min(18,q.h/3));x.fill();x.fillStyle="rgba(119,157,116,.55)";x.beginPath();x.roundRect(q.x+3,q.y+2,q.w-6,9,5);x.fill();x.globalAlpha=.16;for(let k=q.x+24;k<q.x+q.w;k+=78){x.beginPath();x.arc(k,q.y+28+(k%3)*9,10,0,7);x.fill()}x.globalAlpha=1}
  for(const t of g.traps){x.fillStyle="#a54d45";for(let k=0;k<4;k++){x.beginPath();x.moveTo(t.x+k*14,t.y+t.h);x.lineTo(t.x+7+k*14,t.y);x.lineTo(t.x+14+k*14,t.y+t.h);x.fill()}}
  for(const c of g.pickups)if(c.alive){x.fillStyle=c.type==="coin"?"#e2bd5b":"#8c6be8";x.beginPath();x.arc(c.x,c.y,c.r+Math.sin(g.t*4+c.x)*2,0,7);x.fill()}
  for(const e of g.enemies)if(e.alive){if(e.type==="skeleton"){x.strokeStyle="#ded9c8";x.lineWidth=6;x.lineCap="round";x.beginPath();x.arc(e.x+20,e.y+9,9,0,7);x.moveTo(e.x+20,e.y+18);x.lineTo(e.x+20,e.y+32);x.moveTo(e.x+20,e.y+23);x.lineTo(e.x+7,e.y+31);x.moveTo(e.x+20,e.y+23);x.lineTo(e.x+34,e.y+31);x.moveTo(e.x+20,e.y+32);x.lineTo(e.x+10,e.y+45);x.moveTo(e.x+20,e.y+32);x.lineTo(e.x+31,e.y+45);x.stroke()}else{x.fillStyle=e.type==="hound"?"#7e3940":"#5b4b77";x.beginPath();x.roundRect(e.x,e.y,e.w,e.h,11);x.fill();}x.fillStyle="#f25d57";x.fillRect(e.x+8,e.y+8,5,4);x.fillRect(e.x+e.w-13,e.y+8,5,4);x.fillStyle="#101319";x.fillRect(e.x,e.y-8,e.w,4);x.fillStyle="#b64f50";x.fillRect(e.x,e.y-8,e.w*(e.hp/e.max),4)}
