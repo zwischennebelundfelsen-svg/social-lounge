@@ -1,7 +1,13 @@
 (()=>{"use strict";
 const C=document.querySelector("#game"),x=C.getContext("2d"),menu=document.querySelector("#menu"),stage=document.querySelector("#stage"),over=document.querySelector("#over");
 const ui={hp:document.querySelector("#hp"),coins:document.querySelector("#coins"),mult:document.querySelector("#mult"),quest:document.querySelector("#quest"),name:document.querySelector("#heroName"),bank:document.querySelector("#bank"),toast:document.querySelector("#toast")};
-let chosen="bacon",D=1.35,raf=0,last=0,G=null,bank=Number(localStorage.getItem("arcaneBank")||0);ui.bank.textContent="Tresor: "+bank+" ⬡";
+let chosen="bacon",D=1.35,raf=0,last=0,G=null,bank=Number(localStorage.getItem("arcaneBank")||0);
+let AC=null,master=null,musicTimer=0,lastBiome=-1;
+function startAudio(){if(AC){if(AC.state==="suspended")AC.resume();return}AC=new (window.AudioContext||window.webkitAudioContext)();master=AC.createGain();master.gain.value=.18;master.connect(AC.destination)}
+function tone(freq,dur,vol=.05,type="sine",when=0){if(!AC)return;let o=AC.createOscillator(),v=AC.createGain(),t=AC.currentTime+when;o.type=type;o.frequency.value=freq;v.gain.setValueAtTime(0,t);v.gain.linearRampToValueAtTime(vol,t+.02);v.gain.exponentialRampToValueAtTime(.001,t+dur);o.connect(v);v.connect(master);o.start(t);o.stop(t+dur+.03)}
+function noise(dur=.08,vol=.025,when=0){if(!AC)return;let n=AC.createBufferSource(),b=AC.createBuffer(1,AC.sampleRate*dur,AC.sampleRate);let d=b.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*(1-i/d.length);let v=AC.createGain();v.gain.value=vol;n.buffer=b;n.connect(v);v.connect(master);n.start(AC.currentTime+when)}
+function ambience(g){if(!AC)return;let biome=g.player.x<2000?0:g.player.x<4000?1:2;if(biome!==lastBiome){lastBiome=biome;toast(["Dschungel-Lo-Fi","Wuesten-Lo-Fi","Berg-Lo-Fi"][biome])}if(g.t<musicTimer)return;musicTimer=g.t+2.4;let roots=[[110,165,220],[98,147,196],[82.4,123.5,164.8]][biome],r=roots[(Math.floor(g.t/2.4))%3];tone(r,2.2,.035,"sine");tone(r*2,1.5,.018,"triangle",.12);tone(r*1.5,.7,.014,"sine",1.15);noise(.055,.018,.02);noise(.045,.012,1.2);if(biome===0){tone(880,0.12,.008,"sine",.7)}else if(biome===1){noise(.32,.006,.55)}else{tone(329.6,.9,.008,"sine",.65)}}
+ui.bank.textContent="Tresor: "+bank+" ⬡";
 document.querySelectorAll(".hero").forEach(b=>b.onclick=()=>{document.querySelectorAll(".hero").forEach(q=>q.classList.remove("selected"));b.classList.add("selected");chosen=b.dataset.hero});
 const H={
  bacon:{name:"BACON",hp:180,speed:260,jump:570,rate:420,damage:34,pellets:5,spread:.18,color:"#e09b55",skill:"Berserker"},
@@ -15,6 +21,7 @@ function rnd(a,b){return a+Math.random()*(b-a)} function clamp(v,a,b){return Mat
 function toast(s){ui.toast.textContent=s;ui.toast.style.opacity=1;clearTimeout(toast.t);toast.t=setTimeout(()=>ui.toast.style.opacity=0,1500)}
 function recthit(a,b){return a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y}
 function init(){
+ startAudio();musicTimer=0;lastBiome=-1;
  D=+document.querySelector("#difficulty").value;const h=H[chosen];
  G={t:0,cam:0,coins:0,kills:0,crystals:0,quest:0,done:false,extraction:false,shots:[],enemies:[],parts:[],pickups:[],platforms:[],traps:[],chests:[],npcs:[],doors:[],keysFound:0,boss:null,player:{x:90,y:400,w:34,h:52,vx:0,vy:0,on:false,hp:h.hp,max:h.hp,lastShot:0,lastSkill:-9,inv:0,face:1},hero:h};
  const p=G.platforms;p.push({x:-200,y:610,w:900,h:120},{x:760,y:565,w:360,h:165},{x:1190,y:620,w:520,h:110},{x:1800,y:535,w:430,h:195},{x:2320,y:610,w:620,h:120},{x:3040,y:550,w:390,h:180},{x:3510,y:620,w:850,h:110},{x:4460,y:545,w:430,h:185},{x:4990,y:610,w:1100,h:120});
@@ -34,7 +41,7 @@ function init(){
 }
 function spawnEnemy(px,py,type){G.enemies.push({x:px,y:py,w:type==="wraith"?38:45,h:type==="wraith"?46:34,vx:0,vy:0,hp:(type==="wraith"?75:type==="skeleton"?125:95)*D,max:(type==="wraith"?75:type==="skeleton"?125:95)*D,type,cd:rnd(0,1),alive:true})}
 function shoot(){
- const g=G,p=g.player,h=g.hero,now=g.t;if(now-p.lastShot<h.rate/1000)return;p.lastShot=now;
+ const g=G,p=g.player,h=g.hero,now=g.t;if(now-p.lastShot<h.rate/1000)return;p.lastShot=now;startAudio();noise(.045,chosen==="bacon"?.045:.022);tone(chosen==="sinep"?520:chosen==="nexify"?180:105,.08,.018,chosen==="sinep"?"sine":"square");
  let ax=(pointer.x-(p.x-g.cam+p.w/2)),ay=(pointer.y-(p.y+p.h/2)),ang=Math.atan2(ay,ax);if(Math.abs(ax)>10)p.face=Math.sign(ax);
  for(let i=0;i<h.pellets;i++){let a=ang+rnd(-h.spread,h.spread);g.shots.push({x:p.x+p.w/2,y:p.y+22,vx:Math.cos(a)*850,vy:Math.sin(a)*850,r:chosen==="sinep"?7:3,d:h.damage,life:1.1,enemy:false,magic:chosen==="sinep"})}
 }
@@ -45,7 +52,7 @@ function skill(){
  else{p.inv=1.2;p.hp=Math.min(p.max,p.hp+30);G.rage=2.8;toast("BERSERKER")}
 }
 function update(dt){
- const g=G,p=g.player,h=g.hero;g.t+=dt;p.inv=Math.max(0,p.inv-dt);if(G.rage)G.rage=Math.max(0,G.rage-dt);
+ const g=G,p=g.player,h=g.hero;g.t+=dt;ambience(g);p.inv=Math.max(0,p.inv-dt);if(G.rage)G.rage=Math.max(0,G.rage-dt);
  let dir=(keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0);p.vx+=(dir*h.speed-p.vx)*Math.min(1,dt*10);if(dir)p.face=dir;
  if((keys.w||keys.arrowup||keys[" "])&&p.on){p.vy=-h.jump;p.on=false} if(keys.shift)skill();if(pointer.down||keys.f)shoot();
  p.vy+=1500*dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.on=false;
@@ -65,7 +72,7 @@ function update(dt){
  if(!g.done&&g.kills>=10&&g.crystals>=3){g.done=true;g.extraction=true;toast("HAUPTZIEL ERFÜLLT – Portal am Ende geöffnet!")}
  if(g.extraction&&p.x>5800)finish(true);if(p.hp<=0)finish(false);
 }
-function hurt(n){const p=G.player;if(p.inv>0)return;p.hp-=n;p.inv=.7;burst(p.x,p.y,"#ff665c")}
+function hurt(n){noise(.12,.035);tone(72,.14,.025,"sawtooth");const p=G.player;if(p.inv>0)return;p.hp-=n;p.inv=.7;burst(p.x,p.y,"#ff665c")}
 function burst(px,py,c){for(let i=0;i<8;i++)G.parts.push({x:px,y:py,vx:rnd(-140,140),vy:rnd(-180,30),life:rnd(.25,.7),c})}
 function draw(){
  const g=G,p=g.player,W=C.width,Hh=C.height;x.clearRect(0,0,W,Hh);
