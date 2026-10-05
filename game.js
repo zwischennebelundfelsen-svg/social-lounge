@@ -69,7 +69,24 @@ function draw(){
  if(g.extraction){x.strokeStyle="#77e1bd";x.lineWidth=8;x.beginPath();x.ellipse(5890,500,45,90,0,0,7);x.stroke();x.fillStyle="#77e1bd22";x.fillRect(5845,410,90,180)}
  for(const s of g.shots){x.fillStyle=s.enemy?"#ef6259":s.magic?"#c391ff":"#ffd778";x.beginPath();x.arc(s.x,s.y,s.r,0,7);x.fill()}
  for(const z of g.parts){x.globalAlpha=clamp(z.life*2,0,1);x.fillStyle=z.c;x.fillRect(z.x,z.y,4,4)}x.globalAlpha=1;
- x.fillStyle=p.inv>0&&Math.floor(g.t*16)%2?"#fff":g.hero.color;x.fillRect(p.x,p.y,p.w,p.h);x.fillStyle="#11151b";x.fillRect(p.x+(p.face>0?24:2),p.y+16,20*p.face,6);x.fillStyle="#090b0e";x.fillRect(p.x+7,p.y+8,20,8);
+ // Rounded, human-shaped 2.5D hunter with soft shadow and layered highlights
+ x.save();x.translate(p.x+p.w/2,p.y+p.h);if(p.face<0)x.scale(-1,1);
+ x.globalAlpha=.28;x.fillStyle="#000";x.beginPath();x.ellipse(0,4,22,7,0,0,Math.PI*2);x.fill();x.globalAlpha=1;
+ const body=p.inv>0&&Math.floor(g.t*16)%2?"#fff":g.hero.color;
+ // back leg
+ x.strokeStyle="#171b22";x.lineWidth=9;x.lineCap="round";x.beginPath();x.moveTo(-6,-20);x.lineTo(-10,-4);x.lineTo(-16,1);x.stroke();
+ // front leg
+ x.strokeStyle="#2a3039";x.beginPath();x.moveTo(6,-20);x.lineTo(10,-5);x.lineTo(17,0);x.stroke();
+ // torso coat, rounded and tapered
+ let bg=x.createLinearGradient(-15,-45,15,-18);bg.addColorStop(0,body);bg.addColorStop(1,"#242a33");x.fillStyle=bg;x.beginPath();x.moveTo(-14,-42);x.quadraticCurveTo(0,-49,14,-42);x.lineTo(11,-18);x.quadraticCurveTo(0,-13,-11,-18);x.closePath();x.fill();
+ // head + face
+ x.fillStyle="#c99a78";x.beginPath();x.arc(0,-52,10,0,Math.PI*2);x.fill();x.fillStyle="#171b20";x.beginPath();x.arc(0,-55,11,Math.PI,Math.PI*2);x.fill();
+ // shoulder/aiming arm
+ x.strokeStyle="#b98769";x.lineWidth=7;x.beginPath();x.moveTo(9,-37);x.lineTo(20,-31);x.stroke();
+ // weapon with metallic gradient
+ let wg=x.createLinearGradient(14,-36,46,-29);wg.addColorStop(0,"#20252d");wg.addColorStop(.55,"#69727d");wg.addColorStop(1,"#15191f");x.fillStyle=wg;x.beginPath();x.roundRect(15,-35,34,7,3);x.fill();x.fillStyle="#b78a42";x.fillRect(19,-29,7,9);
+ // rim light
+ x.strokeStyle=body;x.globalAlpha=.65;x.lineWidth=2;x.beginPath();x.arc(-1,-52,12,2.5,5.4);x.stroke();x.globalAlpha=1;x.restore();
  x.restore();
  let m=1+Math.floor(g.t/45)*.25+(D-1)*.5;ui.name.textContent=g.hero.name+" · "+g.hero.skill;ui.hp.textContent="HP "+Math.ceil(p.hp)+"/"+p.max;ui.coins.textContent="Beute "+g.coins+" ⬡";ui.mult.textContent="Risiko ×"+m.toFixed(2);ui.quest.textContent=g.done?"✓ Extrahiere am Portal":"Jagd "+g.kills+"/10 · Kristalle "+g.crystals+"/3";
 }
