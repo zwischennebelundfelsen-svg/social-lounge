@@ -16,14 +16,16 @@ function toast(s){ui.toast.textContent=s;ui.toast.style.opacity=1;clearTimeout(t
 function recthit(a,b){return a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y}
 function init(){
  D=+document.querySelector("#difficulty").value;const h=H[chosen];
- G={t:0,cam:0,coins:0,kills:0,crystals:0,quest:0,done:false,extraction:false,shots:[],enemies:[],parts:[],pickups:[],platforms:[],traps:[],chests:[],npcs:[],doors:[],player:{x:90,y:400,w:34,h:52,vx:0,vy:0,on:false,hp:h.hp,max:h.hp,lastShot:0,lastSkill:-9,inv:0,face:1},hero:h};
+ G={t:0,cam:0,coins:0,kills:0,crystals:0,quest:0,done:false,extraction:false,shots:[],enemies:[],parts:[],pickups:[],platforms:[],traps:[],chests:[],npcs:[],doors:[],keysFound:0,boss:null,player:{x:90,y:400,w:34,h:52,vx:0,vy:0,on:false,hp:h.hp,max:h.hp,lastShot:0,lastSkill:-9,inv:0,face:1},hero:h};
  const p=G.platforms;p.push({x:-200,y:610,w:900,h:120},{x:760,y:565,w:360,h:165},{x:1190,y:620,w:520,h:110},{x:1800,y:535,w:430,h:195},{x:2320,y:610,w:620,h:120},{x:3040,y:550,w:390,h:180},{x:3510,y:620,w:850,h:110},{x:4460,y:545,w:430,h:185},{x:4990,y:610,w:1100,h:120});
  [[390,480,180,20],[880,420,170,20],[1370,455,170,20],[1930,385,180,20],[2480,450,180,20],[3180,390,160,20],[3710,460,190,20],[4100,360,160,20],[4580,410,170,20],[5290,430,180,20]].forEach(a=>p.push({x:a[0],y:a[1],w:a[2],h:a[3]}));
  [710,1135,1720,2250,2960,3440,4380,4910].forEach(v=>G.traps.push({x:v,y:600,w:55,h:25}));
  // Continuous themed regions: jungle -> desert -> mountains
  G.npcs.push({x:210,y:555,name:"Milo",text:"Der Dschungel verschluckt jeden unvorsichtigen Jäger."},{x:2180,y:480,name:"Rashid",text:"Hinter den Dünen liegen alte Kammern."},{x:4240,y:565,name:"Eira",text:"Im Gebirge wartet etwas in der Höhle."});
  G.chests.push({x:560,y:440,open:false},{x:1540,y:580,open:false},{x:2700,y:410,open:false},{x:3380,y:510,open:false},{x:4720,y:505,open:false},{x:5480,y:390,open:false});
- G.doors.push({x:1960,y:475,w:55,h:60,kind:"temple"},{x:4620,y:485,w:70,h:60,kind:"cave"});
+ G.doors.push({x:1960,y:475,w:55,h:60,kind:"temple",locked:true},{x:4620,y:485,w:70,h:60,kind:"cave",locked:false});
+ G.pickups.push({x:980,y:380,r:11,type:"key",alive:true},{x:1680,y:560,r:11,type:"key",alive:true});
+ [[4080,500,130,18],[4300,410,145,18],[4520,330,125,18],[4770,405,160,18],[5050,325,135,18],[5320,470,150,18]].forEach(a=>p.push({x:a[0],y:a[1],w:a[2],h:a[3]}));
  for(let i=0;i<16;i++)spawnEnemy(520+i*320,rnd(320,510),i%5===0?"wraith":"hound");
  for(let i=0;i<18;i++)G.pickups.push({x:300+i*310,y:rnd(280,470),r:9,type:i%4===0?"crystal":"coin",alive:true});
  menu.hidden=true;over.hidden=true;stage.hidden=false;last=performance.now();cancelAnimationFrame(raf);raf=requestAnimationFrame(loop);toast("Auftrag: 10 Kreaturen jagen + 3 Runenkristalle");
@@ -54,8 +56,9 @@ function update(dt){
   if(!s.enemy)for(const e of g.enemies)if(e.alive&&s.life>0&&recthit({x:s.x-s.r,y:s.y-s.r,w:s.r*2,h:s.r*2},e)){e.hp-=s.d*(G.rage?1.55:1);s.life=0;burst(s.x,s.y,h.color);if(s.magic)for(const z of g.enemies)if(z!==e&&z.alive&&Math.hypot(z.x-e.x,z.y-e.y)<100)z.hp-=s.d*.55;if(e.hp<=0){e.alive=false;g.kills++;g.coins+=3;burst(e.x,e.y,"#d4b66e")}}}
  g.shots=g.shots.filter(s=>s.life>0&&s.x>-100&&s.x<6300);
  for(const e of g.enemies){if(!e.alive)continue;let dx=p.x-e.x,dy=p.y-e.y;if(e.type==="hound"){e.vx=Math.sign(dx)*90*D;e.x+=e.vx*dt;if(Math.abs(dx)<50&&Math.abs(dy)<70&&e.cd<=0){hurt(13*D);e.cd=1.05}}else{e.y+=Math.sin(g.t*2+e.x)*20*dt;e.x+=Math.sign(dx)*45*dt;if(Math.abs(dx)<520&&e.cd<=0){let a=Math.atan2(p.y-e.y,p.x-e.x);g.shots.push({x:e.x,y:e.y,vx:Math.cos(a)*330,vy:Math.sin(a)*330,r:5,d:12*D,life:2,enemy:true});e.cd=1.7/D}}e.cd-=dt}
- for(const c of g.pickups)if(c.alive&&Math.hypot(p.x-c.x,p.y-c.y)<48){c.alive=false;if(c.type==="coin")g.coins+=5;else{g.crystals++;toast("Runenkristall "+g.crystals+"/3")}}
+ for(const c of g.pickups)if(c.alive&&Math.hypot(p.x-c.x,p.y-c.y)<48){c.alive=false;if(c.type==="coin")g.coins+=5;else if(c.type==="key"){g.keysFound++;toast("Tempelschluessel "+g.keysFound+"/2");if(g.keysFound>=2){let d=g.doors.find(v=>v.kind==="temple");if(d)d.locked=false;}}else{g.crystals++;toast("Runenkristall "+g.crystals+"/3")}}
  for(const z of g.parts){z.x+=z.vx*dt;z.y+=z.vy*dt;z.vy+=300*dt;z.life-=dt}g.parts=g.parts.filter(z=>z.life>0);
+ let gate=g.doors.find(v=>v.kind==="temple");if(gate&&gate.locked&&p.x>gate.x-35&&p.x<gate.x+70){p.x=gate.x-38;p.vx=0;}
  if(!g.done&&g.kills>=10&&g.crystals>=3){g.done=true;g.extraction=true;toast("HAUPTZIEL ERFÜLLT – Portal am Ende geöffnet!")}
  if(g.extraction&&p.x>5800)finish(true);if(p.hp<=0)finish(false);
 }
