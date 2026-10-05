@@ -150,7 +150,9 @@ function draw(){
  let shoulder=isB?20:isS?13:15, waist=isB?14:isS?9:11;
  let bg=x.createLinearGradient(-20,-47,20,-17);bg.addColorStop(0,body);bg.addColorStop(1,"#222832");x.fillStyle=bg;
  x.beginPath();x.moveTo(-shoulder,-43);x.quadraticCurveTo(0,-50,shoulder,-43);x.lineTo(waist,-18);x.quadraticCurveTo(0,-13,-waist,-18);x.closePath();x.fill();
- // Bacon muscular arms / others slimmer\n x.save();x.translate(shoulder-3,-39);x.rotate(aimAngle);x.translate(-(shoulder-3),39);\n x.strokeStyle=isS?"#c9967d":"#b98567";x.lineWidth=isB?11:7;x.beginPath();x.moveTo(shoulder-3,-39);x.lineTo(22+armSwing-recoil,-30);x.stroke();
+ // Bacon muscular arms / others slimmer
+ x.save();x.translate(shoulder-3,-39);x.rotate(aimAngle);x.translate(-(shoulder-3),39);
+ x.strokeStyle=isS?"#c9967d":"#b98567";x.lineWidth=isB?11:7;x.beginPath();x.moveTo(shoulder-3,-39);x.lineTo(22+armSwing-recoil,-30);x.stroke();
  if(isB){x.beginPath();x.arc(-18,-36,6,0,Math.PI*2);x.fillStyle="#b98567";x.fill()}
  // head
  x.fillStyle=isS?"#d2a084":"#c58f70";x.beginPath();x.arc(0,-54,isB?11:10,0,Math.PI*2);x.fill();
@@ -167,7 +169,8 @@ function draw(){
  // muzzle flash and movement dust
  if(recoil>1){x.fillStyle="#ffd77a";x.globalAlpha=.8;x.beginPath();x.moveTo(isB?58:48,-32);x.lineTo(isB?75:62,-39);x.lineTo(isB?68:57,-30);x.lineTo(isB?76:63,-24);x.closePath();x.fill();x.globalAlpha=1}
  if(p.on&&moving&&Math.abs(phase)>.82){x.fillStyle="#b9b0a255";x.beginPath();x.arc(-18,2,5,0,7);x.arc(-27,1,3,0,7);x.fill()}
- x.restore();\n // face highlight + rim
+ x.restore();
+ // face highlight + rim
  x.fillStyle="#1b1513";x.beginPath();x.arc(5,-54,1.4,0,7);x.fill();x.strokeStyle=body;x.globalAlpha=.55;x.lineWidth=2;x.beginPath();x.arc(-1,-54,13,2.5,5.4);x.stroke();x.globalAlpha=1;x.restore();
  x.restore();
  let m=1+Math.floor(g.t/45)*.25+(D-1)*.5;ui.name.textContent=g.hero.name+" · "+g.hero.skill;ui.hp.textContent="HP "+Math.ceil(p.hp)+"/"+p.max;ui.coins.textContent="Beute "+g.coins+" ⬡";ui.mult.textContent="Risiko ×"+m.toFixed(2);let worldName=g.level===1?"Smaragd-Dschungel":g.level===2?"Sonnenwüste":"Frostgebirge";ui.quest.textContent=(g.done?"✓ Extrahiere am Portal":"Welt "+g.level+"/3 · "+worldName+" · Jagd "+g.kills+"/10 · Kristalle "+g.crystals+"/3");
