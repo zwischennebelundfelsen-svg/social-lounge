@@ -69,24 +69,35 @@ function draw(){
  if(g.extraction){x.strokeStyle="#77e1bd";x.lineWidth=8;x.beginPath();x.ellipse(5890,500,45,90,0,0,7);x.stroke();x.fillStyle="#77e1bd22";x.fillRect(5845,410,90,180)}
  for(const s of g.shots){x.fillStyle=s.enemy?"#ef6259":s.magic?"#c391ff":"#ffd778";x.beginPath();x.arc(s.x,s.y,s.r,0,7);x.fill()}
  for(const z of g.parts){x.globalAlpha=clamp(z.life*2,0,1);x.fillStyle=z.c;x.fillRect(z.x,z.y,4,4)}x.globalAlpha=1;
- // Rounded, human-shaped 2.5D hunter with soft shadow and layered highlights
+ // Distinct human 2.5D character silhouettes
  x.save();x.translate(p.x+p.w/2,p.y+p.h);if(p.face<0)x.scale(-1,1);
- x.globalAlpha=.28;x.fillStyle="#000";x.beginPath();x.ellipse(0,4,22,7,0,0,Math.PI*2);x.fill();x.globalAlpha=1;
- const body=p.inv>0&&Math.floor(g.t*16)%2?"#fff":g.hero.color;
- // back leg
- x.strokeStyle="#171b22";x.lineWidth=9;x.lineCap="round";x.beginPath();x.moveTo(-6,-20);x.lineTo(-10,-4);x.lineTo(-16,1);x.stroke();
- // front leg
- x.strokeStyle="#2a3039";x.beginPath();x.moveTo(6,-20);x.lineTo(10,-5);x.lineTo(17,0);x.stroke();
- // torso coat, rounded and tapered
- let bg=x.createLinearGradient(-15,-45,15,-18);bg.addColorStop(0,body);bg.addColorStop(1,"#242a33");x.fillStyle=bg;x.beginPath();x.moveTo(-14,-42);x.quadraticCurveTo(0,-49,14,-42);x.lineTo(11,-18);x.quadraticCurveTo(0,-13,-11,-18);x.closePath();x.fill();
- // head + face
- x.fillStyle="#c99a78";x.beginPath();x.arc(0,-52,10,0,Math.PI*2);x.fill();x.fillStyle="#171b20";x.beginPath();x.arc(0,-55,11,Math.PI,Math.PI*2);x.fill();
- // shoulder/aiming arm
- x.strokeStyle="#b98769";x.lineWidth=7;x.beginPath();x.moveTo(9,-37);x.lineTo(20,-31);x.stroke();
- // weapon with metallic gradient
- let wg=x.createLinearGradient(14,-36,46,-29);wg.addColorStop(0,"#20252d");wg.addColorStop(.55,"#69727d");wg.addColorStop(1,"#15191f");x.fillStyle=wg;x.beginPath();x.roundRect(15,-35,34,7,3);x.fill();x.fillStyle="#b78a42";x.fillRect(19,-29,7,9);
- // rim light
- x.strokeStyle=body;x.globalAlpha=.65;x.lineWidth=2;x.beginPath();x.arc(-1,-52,12,2.5,5.4);x.stroke();x.globalAlpha=1;x.restore();
+ x.globalAlpha=.3;x.fillStyle="#000";x.beginPath();x.ellipse(0,4,24,7,0,0,Math.PI*2);x.fill();x.globalAlpha=1;
+ const flash=p.inv>0&&Math.floor(g.t*16)%2, body=flash?"#fff":g.hero.color;
+ const isB=chosen==="bacon",isN=chosen==="nexify",isS=chosen==="sinep";
+ // legs
+ x.lineCap="round";x.strokeStyle="#171b22";x.lineWidth=isB?11:8;x.beginPath();x.moveTo(-7,-21);x.lineTo(-10,-5);x.lineTo(-17,1);x.stroke();
+ x.strokeStyle="#303641";x.beginPath();x.moveTo(7,-21);x.lineTo(11,-5);x.lineTo(18,0);x.stroke();
+ // torso: Bacon broad/muscular, Nexify athletic, SINEP feminine silhouette
+ let shoulder=isB?20:isS?13:15, waist=isB?14:isS?9:11;
+ let bg=x.createLinearGradient(-20,-47,20,-17);bg.addColorStop(0,body);bg.addColorStop(1,"#222832");x.fillStyle=bg;
+ x.beginPath();x.moveTo(-shoulder,-43);x.quadraticCurveTo(0,-50,shoulder,-43);x.lineTo(waist,-18);x.quadraticCurveTo(0,-13,-waist,-18);x.closePath();x.fill();
+ // Bacon muscular arms / others slimmer
+ x.strokeStyle=isS?"#c9967d":"#b98567";x.lineWidth=isB?11:7;x.beginPath();x.moveTo(shoulder-3,-39);x.lineTo(22,-30);x.stroke();
+ if(isB){x.beginPath();x.arc(-18,-36,6,0,Math.PI*2);x.fillStyle="#b98567";x.fill()}
+ // head
+ x.fillStyle=isS?"#d2a084":"#c58f70";x.beginPath();x.arc(0,-54,isB?11:10,0,Math.PI*2);x.fill();
+ // hair / cap
+ if(isN){x.fillStyle="#10141a";x.beginPath();x.arc(0,-57,11,Math.PI,Math.PI*2);x.fill();x.beginPath();x.roundRect(6,-59,14,4,2);x.fill()} 
+ else if(isB){x.fillStyle="#38271f";x.beginPath();x.arc(0,-58,10,Math.PI,Math.PI*2);x.fill();x.fillStyle="#4a3025";x.beginPath();x.arc(1,-50,8,0,.95*Math.PI);x.fill()}
+ else{x.fillStyle="#241b2d";x.beginPath();x.arc(-1,-57,11,Math.PI,Math.PI*2);x.fill();x.beginPath();x.roundRect(-10,-56,6,25,3);x.fill()}
+ // weapon: shotgun / dual revolver impression / arcane rifle
+ let wg=x.createLinearGradient(14,-36,55,-28);wg.addColorStop(0,"#20252d");wg.addColorStop(.55,"#7a8490");wg.addColorStop(1,"#11151b");x.fillStyle=wg;
+ x.beginPath();x.roundRect(15,-35,isB?45:isN?31:40,isB?9:7,3);x.fill();
+ if(isN){x.fillRect(12,-25,29,6);x.fillStyle="#b78a42";x.fillRect(18,-29,6,8);x.fillRect(16,-19,6,7)}
+ else if(isS){x.fillStyle="#b98cff";x.beginPath();x.arc(54,-31,6,0,Math.PI*2);x.fill()}
+ else{x.fillStyle="#9c6a35";x.fillRect(21,-27,12,7)}
+ // face highlight + rim
+ x.fillStyle="#1b1513";x.beginPath();x.arc(5,-54,1.4,0,7);x.fill();x.strokeStyle=body;x.globalAlpha=.55;x.lineWidth=2;x.beginPath();x.arc(-1,-54,13,2.5,5.4);x.stroke();x.globalAlpha=1;x.restore();
  x.restore();
  let m=1+Math.floor(g.t/45)*.25+(D-1)*.5;ui.name.textContent=g.hero.name+" · "+g.hero.skill;ui.hp.textContent="HP "+Math.ceil(p.hp)+"/"+p.max;ui.coins.textContent="Beute "+g.coins+" ⬡";ui.mult.textContent="Risiko ×"+m.toFixed(2);ui.quest.textContent=g.done?"✓ Extrahiere am Portal":"Jagd "+g.kills+"/10 · Kristalle "+g.crystals+"/3";
 }
