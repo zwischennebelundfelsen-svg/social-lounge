@@ -8,12 +8,13 @@ function tone(freq,dur,vol=.05,type="sine",when=0){if(!AC)return;let o=AC.create
 function noise(dur=.08,vol=.025,when=0){if(!AC)return;let n=AC.createBufferSource(),b=AC.createBuffer(1,AC.sampleRate*dur,AC.sampleRate);let d=b.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*(1-i/d.length);let v=AC.createGain();v.gain.value=vol;n.buffer=b;n.connect(v);v.connect(master);n.start(AC.currentTime+when)}
 function ambience(g){if(!AC)return;let biome=g.player.x<2000?0:g.player.x<4000?1:2;if(biome!==lastBiome){lastBiome=biome;toast(["Dschungel-Lo-Fi","Wuesten-Lo-Fi","Berg-Lo-Fi"][biome])}if(g.t<musicTimer)return;musicTimer=g.t+2.4;let roots=[[110,165,220],[98,147,196],[82.4,123.5,164.8]][biome],r=roots[(Math.floor(g.t/2.4))%3];tone(r,2.2,.035,"sine");tone(r*2,1.5,.018,"triangle",.12);tone(r*1.5,.7,.014,"sine",1.15);noise(.055,.018,.02);noise(.045,.012,1.2);if(biome===0){tone(880,0.12,.008,"sine",.7)}else if(biome===1){noise(.32,.006,.55)}else{tone(329.6,.9,.008,"sine",.65)}}
 ui.bank.textContent="Tresor: "+bank+" ⬡";
-document.querySelectorAll(".hero").forEach(b=>b.onclick=()=>{document.querySelectorAll(".hero").forEach(q=>q.classList.remove("selected"));b.classList.add("selected");chosen=b.dataset.hero;const sn=document.querySelector("#selectedName");if(sn)sn.textContent=H&&H[chosen]?H[chosen].name:chosen.toUpperCase()});
+
 const H={
  bacon:{name:"BACON",hp:180,speed:260,jump:720,rate:420,damage:34,pellets:5,spread:.18,color:"#e09b55",skill:"Berserker"},
  nexify:{name:"NexifyGG",hp:115,speed:340,jump:760,rate:145,damage:19,pellets:1,spread:.035,color:"#65c7e8",skill:"Dash"},
  sinep:{name:"SINEP",hp:100,speed:285,jump:740,rate:360,damage:42,pellets:1,spread:.02,color:"#b98cff",skill:"Blink"}
 };
+document.querySelectorAll(".hero").forEach(b=>b.onclick=()=>{document.querySelectorAll(".hero").forEach(q=>q.classList.remove("selected"));b.classList.add("selected");chosen=b.dataset.hero;const sn=document.querySelector("#selectedName");if(sn)sn.textContent=H[chosen].name});
 const keys={},pointer={x:900,y:350,down:false};let interactPressed=false; addEventListener("keydown",e=>{let k=e.key.toLowerCase();if(k==="e"&&!keys.e)interactPressed=true;keys[k]=true;if([" ","arrowup","arrowdown"].includes(e.key.toLowerCase()))e.preventDefault()});addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
 C.addEventListener("pointermove",e=>{const r=C.getBoundingClientRect();pointer.x=(e.clientX-r.left)*C.width/r.width;pointer.y=(e.clientY-r.top)*C.height/r.height});C.addEventListener("pointerdown",()=>{pointer.down=true;C.focus()});addEventListener("pointerup",()=>pointer.down=false);
 document.querySelectorAll("#touch button").forEach(b=>{const k=b.dataset.k,map={left:"a",right:"d",jump:" ",shoot:"f",skill:"shift"};for(const ev of ["pointerdown","pointerup","pointercancel"])b.addEventListener(ev,e=>{e.preventDefault();keys[map[k]]=ev==="pointerdown"})});
