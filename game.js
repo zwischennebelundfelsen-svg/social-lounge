@@ -71,18 +71,22 @@ function draw(){
  for(const z of g.parts){x.globalAlpha=clamp(z.life*2,0,1);x.fillStyle=z.c;x.fillRect(z.x,z.y,4,4)}x.globalAlpha=1;
  // Distinct human 2.5D character silhouettes
  x.save();x.translate(p.x+p.w/2,p.y+p.h);if(p.face<0)x.scale(-1,1);
+ const moving=Math.abs(p.vx)>35, airborne=!p.on, phase=moving?Math.sin(g.t*(8+Math.abs(p.vx)/70)):0;
+ const bob=airborne?-3:Math.abs(phase)*1.8, legSwing=airborne?5:phase*7, armSwing=airborne?-4:phase*3;
+ const recoil=Math.max(0,1-(g.t-p.lastShot)*9)*7;
+ x.translate(0,bob);
  x.globalAlpha=.3;x.fillStyle="#000";x.beginPath();x.ellipse(0,4,24,7,0,0,Math.PI*2);x.fill();x.globalAlpha=1;
  const flash=p.inv>0&&Math.floor(g.t*16)%2, body=flash?"#fff":g.hero.color;
  const isB=chosen==="bacon",isN=chosen==="nexify",isS=chosen==="sinep";
  // legs
- x.lineCap="round";x.strokeStyle="#171b22";x.lineWidth=isB?11:8;x.beginPath();x.moveTo(-7,-21);x.lineTo(-10,-5);x.lineTo(-17,1);x.stroke();
- x.strokeStyle="#303641";x.beginPath();x.moveTo(7,-21);x.lineTo(11,-5);x.lineTo(18,0);x.stroke();
+ x.lineCap="round";x.strokeStyle="#171b22";x.lineWidth=isB?11:8;x.beginPath();x.moveTo(-7,-21);x.lineTo(-10-legSwing*.35,-5);x.lineTo(-17-legSwing,1);x.stroke();
+ x.strokeStyle="#303641";x.beginPath();x.moveTo(7,-21);x.lineTo(11+legSwing*.35,-5);x.lineTo(18+legSwing,0);x.stroke();
  // torso: Bacon broad/muscular, Nexify athletic, SINEP feminine silhouette
  let shoulder=isB?20:isS?13:15, waist=isB?14:isS?9:11;
  let bg=x.createLinearGradient(-20,-47,20,-17);bg.addColorStop(0,body);bg.addColorStop(1,"#222832");x.fillStyle=bg;
  x.beginPath();x.moveTo(-shoulder,-43);x.quadraticCurveTo(0,-50,shoulder,-43);x.lineTo(waist,-18);x.quadraticCurveTo(0,-13,-waist,-18);x.closePath();x.fill();
  // Bacon muscular arms / others slimmer
- x.strokeStyle=isS?"#c9967d":"#b98567";x.lineWidth=isB?11:7;x.beginPath();x.moveTo(shoulder-3,-39);x.lineTo(22,-30);x.stroke();
+ x.strokeStyle=isS?"#c9967d":"#b98567";x.lineWidth=isB?11:7;x.beginPath();x.moveTo(shoulder-3,-39);x.lineTo(22+armSwing-recoil,-30);x.stroke();
  if(isB){x.beginPath();x.arc(-18,-36,6,0,Math.PI*2);x.fillStyle="#b98567";x.fill()}
  // head
  x.fillStyle=isS?"#d2a084":"#c58f70";x.beginPath();x.arc(0,-54,isB?11:10,0,Math.PI*2);x.fill();
@@ -92,10 +96,13 @@ function draw(){
  else{x.fillStyle="#241b2d";x.beginPath();x.arc(-1,-57,11,Math.PI,Math.PI*2);x.fill();x.beginPath();x.roundRect(-10,-56,6,25,3);x.fill()}
  // weapon: shotgun / dual revolver impression / arcane rifle
  let wg=x.createLinearGradient(14,-36,55,-28);wg.addColorStop(0,"#20252d");wg.addColorStop(.55,"#7a8490");wg.addColorStop(1,"#11151b");x.fillStyle=wg;
- x.beginPath();x.roundRect(15,-35,isB?45:isN?31:40,isB?9:7,3);x.fill();
+ x.save();x.translate(-recoil,0);x.beginPath();x.roundRect(15,-35,isB?45:isN?31:40,isB?9:7,3);x.fill();
  if(isN){x.fillRect(12,-25,29,6);x.fillStyle="#b78a42";x.fillRect(18,-29,6,8);x.fillRect(16,-19,6,7)}
  else if(isS){x.fillStyle="#b98cff";x.beginPath();x.arc(54,-31,6,0,Math.PI*2);x.fill()}
- else{x.fillStyle="#9c6a35";x.fillRect(21,-27,12,7)}
+ else{x.fillStyle="#9c6a35";x.fillRect(21,-27,12,7)}x.restore();
+ // muzzle flash and movement dust
+ if(recoil>1){x.fillStyle="#ffd77a";x.globalAlpha=.8;x.beginPath();x.moveTo(isB?58:48,-32);x.lineTo(isB?75:62,-39);x.lineTo(isB?68:57,-30);x.lineTo(isB?76:63,-24);x.closePath();x.fill();x.globalAlpha=1}
+ if(p.on&&moving&&Math.abs(phase)>.82){x.fillStyle="#b9b0a255";x.beginPath();x.arc(-18,2,5,0,7);x.arc(-27,1,3,0,7);x.fill()}
  // face highlight + rim
  x.fillStyle="#1b1513";x.beginPath();x.arc(5,-54,1.4,0,7);x.fill();x.strokeStyle=body;x.globalAlpha=.55;x.lineWidth=2;x.beginPath();x.arc(-1,-54,13,2.5,5.4);x.stroke();x.globalAlpha=1;x.restore();
  x.restore();
