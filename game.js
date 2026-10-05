@@ -26,4 +26,5 @@ for(let e of g.enemies)if(e.alive){ctx.fillStyle=e.x<2000?"#733c45":e.x<4000?"#6
 for(let s of g.shots){ctx.fillStyle="#ffd36a";ctx.beginPath();ctx.arc(s.x,s.y,4,0,7);ctx.fill()}
 ctx.save();ctx.translate(p.x+17,p.y+54);if(p.face<0)ctx.scale(-1,1);ctx.fillStyle=g.hero.color;ctx.beginPath();ctx.roundRect(-15,-45,30,36,10);ctx.fill();ctx.fillStyle="#c99172";ctx.beginPath();ctx.arc(0,-54,10,0,7);ctx.fill();if(chosen==="nexify"){ctx.fillStyle="#111820";ctx.fillRect(-11,-64,24,7);ctx.fillRect(8,-61,15,4)}if(chosen==="sinep"){ctx.fillStyle="#281c32";ctx.fillRect(-11,-64,7,34)}ctx.fillStyle="#252b32";ctx.fillRect(11,-37,45,8);ctx.restore();ctx.restore();
 $("#heroName").textContent=g.hero.name+" · "+g.hero.weapon;$("#hp").textContent="HP "+Math.ceil(p.hp)+"/"+p.max;$("#coins").textContent="Beute "+g.coins+" ⬡";$("#world").textContent="Welt "+g.level+"/3";$("#quest").textContent=g.level===1?"Tempel erreichen":g.level===2?"Wüstenruine durchqueren":"Bergkönig finden"}
-}})();
+}
+})();
