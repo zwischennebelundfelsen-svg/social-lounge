@@ -85,7 +85,13 @@ function burst(px,py,c){for(let i=0;i<8;i++)G.parts.push({x:px,y:py,vx:rnd(-140,
 function draw(){
  const g=G,p=g.player,W=C.width,Hh=C.height;x.clearRect(0,0,W,Hh);
  let grd=x.createLinearGradient(0,0,0,Hh);grd.addColorStop(0,"#111827");grd.addColorStop(.55,"#202735");grd.addColorStop(1,"#090b0f");x.fillStyle=grd;x.fillRect(0,0,W,Hh);
- x.globalAlpha=.18;for(let i=0;i<18;i++){let px=((i*173-g.cam*.18)%1500+1500)%1500;x.fillStyle="#9fa9ba";x.beginPath();x.arc(px,140+(i%5)*54,80+i%3*35,0,7);x.fill()}x.globalAlpha=1;
+ // layered side-scroller depth: distant silhouettes, midground and foreground
+ let biome=p.x<2000?0:p.x<4000?1:2;
+ x.save();x.globalAlpha=.22;
+ for(let i=0;i<12;i++){let px=((i*240-g.cam*.12)%1800+1800)%1800;if(biome===0){x.fillStyle="#173a34";x.beginPath();x.arc(px,260,95,0,7);x.arc(px+55,285,70,0,7);x.fill()}else if(biome===1){x.fillStyle="#806a4d";x.beginPath();x.moveTo(px-130,520);x.quadraticCurveTo(px,390,px+150,520);x.fill()}else{x.fillStyle="#66717e";x.beginPath();x.moveTo(px-150,520);x.lineTo(px,180+(i%3)*45);x.lineTo(px+170,520);x.fill()}}x.restore();
+ x.save();x.globalAlpha=.13;for(let i=0;i<22;i++){let px=((i*137-g.cam*.28)%1500+1500)%1500;x.fillStyle="#d7e0e7";x.beginPath();x.arc(px,120+(i%6)*58,45+i%4*18,0,7);x.fill()}x.restore();
+ // subtle vignette for a more cinematic, less flat presentation
+ let vg=x.createRadialGradient(W*.5,Hh*.45,180,W*.5,Hh*.45,760);vg.addColorStop(.55,"rgba(0,0,0,0)");vg.addColorStop(1,"rgba(0,0,0,.34)");x.fillStyle=vg;x.fillRect(0,0,W,Hh);
  // full-width readable riddle panel
  if(g.riddle){let r=g.riddle;x.save();x.fillStyle="rgba(9,13,20,.94)";x.beginPath();x.roundRect(70,28,W-140,150,22);x.fill();x.strokeStyle="rgba(210,190,130,.55)";x.lineWidth=2;x.stroke();x.fillStyle="#f5f1e8";x.font="700 17px system-ui";let words=r.q.split(" "),lines=[""];for(const w of words){let i=lines.length-1,t=(lines[i]+" "+w).trim();if(x.measureText(t).width>W-200)lines.push(w);else lines[i]=t}lines.forEach((v,i)=>x.fillText(v,95,62+i*23));x.font="600 15px system-ui";r.a.forEach((v,i)=>x.fillText((i+1)+": "+v,105+i*((W-210)/3),142));x.fillStyle="#b8c1cc";x.font="12px system-ui";x.fillText("Drücke 1, 2 oder 3 für deine Antwort.",95,166);x.restore()}
  x.save();x.translate(-g.cam,0);
@@ -101,6 +107,8 @@ function draw(){
     x.fillStyle="#4d5663";x.beginPath();x.moveTo(wx,560);x.lineTo(wx+85,260);x.lineTo(wx+180,560);x.fill();x.fillStyle="#cbd3dc";x.beginPath();x.moveTo(wx+65,330);x.lineTo(wx+85,260);x.lineTo(wx+108,335);x.fill();
    }
  }
+ // decorative foreground silhouettes add readable platformer structure
+ for(let fx=Math.floor(g.cam/260)*260;fx<g.cam+W+300;fx+=260){if(fx<2000){x.fillStyle="rgba(10,35,29,.38)";x.beginPath();x.ellipse(fx+35,605,75,22,-.2,0,7);x.fill()}else if(fx<4000){x.fillStyle="rgba(78,54,35,.3)";x.beginPath();x.ellipse(fx+50,610,95,18,.1,0,7);x.fill()}else{x.fillStyle="rgba(20,28,38,.4)";x.beginPath();x.moveTo(fx,610);x.lineTo(fx+45,545);x.lineTo(fx+105,610);x.fill()}}
  // region title signs
  x.font="700 22px system-ui";x.fillStyle="#dff7df";x.fillText("I  SMARAGD-DSCHUNGEL",120,95);x.fillStyle="#ffe1a1";x.fillText("II  SONNENWÜSTE",2140,95);x.fillStyle="#e2e9f2";x.fillText("III  FROSTGEBIRGE",4140,95);
  // NPCs
