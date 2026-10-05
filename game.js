@@ -23,7 +23,7 @@ function recthit(a,b){return a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y}
 function init(){
  startAudio();musicTimer=0;lastBiome=-1;
  D=+document.querySelector("#difficulty").value;const h=H[chosen];
- G={t:0,cam:0,coins:0,kills:0,crystals:0,quest:0,done:false,extraction:false,shots:[],enemies:[],parts:[],pickups:[],platforms:[],traps:[],chests:[],npcs:[],doors:[],keysFound:0,boss:null,riddle:null,riddlesDone:0,player:{x:90,y:400,w:34,h:52,vx:0,vy:0,on:false,hp:h.hp,max:h.hp,lastShot:0,lastSkill:-9,inv:0,face:1},hero:h};
+ G={t:0,cam:0,coins:0,kills:0,crystals:0,quest:0,done:false,extraction:false,shots:[],enemies:[],parts:[],pickups:[],platforms:[],traps:[],chests:[],npcs:[],doors:[],keysFound:0,boss:null,riddle:null,riddlesDone:0,level:1,levelBanner:null,levelSeen:[false,false,false],player:{x:90,y:400,w:34,h:52,vx:0,vy:0,on:false,hp:h.hp,max:h.hp,lastShot:0,lastSkill:-9,inv:0,face:1},hero:h};
  const p=G.platforms;p.push({x:-200,y:610,w:900,h:120},{x:760,y:565,w:360,h:165},{x:1190,y:620,w:520,h:110},{x:1800,y:535,w:430,h:195},{x:2320,y:610,w:620,h:120},{x:3040,y:550,w:390,h:180},{x:3510,y:620,w:850,h:110},{x:4460,y:545,w:430,h:185},{x:4990,y:610,w:1100,h:120});
  [[390,480,180,20],[880,420,170,20],[1370,455,170,20],[1930,385,180,20],[2480,450,180,20],[3180,390,160,20],[3710,460,190,20],[4100,360,160,20],[4580,410,170,20],[5290,430,180,20]].forEach(a=>p.push({x:a[0],y:a[1],w:a[2],h:a[3]}));
  [710,1135,1720,2250,2960,3440,4380,4910].forEach(v=>G.traps.push({x:v,y:600,w:55,h:25}));
@@ -58,6 +58,8 @@ function skill(){
 }
 function update(dt){
  const g=G,p=g.player,h=g.hero;g.t+=dt;ambience(g);
+ let currentLevel=p.x<2000?1:p.x<4000?2:3;
+ if(currentLevel!==g.level){let old=g.level;g.level=currentLevel;g.levelBanner={until:g.t+4,title:"LEVEL "+old+" ERFOLGREICH BEENDET!",sub:old===1?"Jawohl! Der Dschungel liegt hinter dir. Weiter geht's in die Sonnenwüste!":old===2?"Chaka, du schaffst das! Die Wüste ist bezwungen. Auf ins Frostgebirge!":"Stark gespielt! Die nächste Welt wartet."};tone(523,.18,.035,"sine");tone(659,.18,.03,"sine",.16);tone(784,.3,.03,"sine",.32)}
  // Giana-Sisters-inspired progression: movement challenges lead into self-contained puzzle gates.
  if(!g.riddle){for(const r of g.riddleStations||[])if(!r.done&&Math.abs(p.x-r.x)<70){g.riddle=r;toast("Rätsel entdeckt – antworte mit 1, 2 oder 3.");break}}
  if(g.riddle){let pick=keys["1"]?1:keys["2"]?2:keys["3"]?3:0;if(pick){keys[String(pick)]=false;if(pick===g.riddle.correct){g.riddle.done=true;g.riddlesDone++;g.coins+=20;toast("Richtig! Der Weg reagiert auf deine Lösung.");g.riddle=null;if(g.riddlesDone>=1){let d=g.doors.find(v=>v.kind==="temple");if(d)d.locked=false}if(g.riddlesDone>=3){let d=g.doors.find(v=>v.kind==="cave");if(d)d.locked=false}}else{toast("Falsch. Beobachte die Hinweise und versuche es erneut.");p.hp=Math.max(1,p.hp-12);}}}p.inv=Math.max(0,p.inv-dt);if(G.rage)G.rage=Math.max(0,G.rage-dt);
@@ -92,6 +94,8 @@ function draw(){
  x.save();x.globalAlpha=.13;for(let i=0;i<22;i++){let px=((i*137-g.cam*.28)%1500+1500)%1500;x.fillStyle="#d7e0e7";x.beginPath();x.arc(px,120+(i%6)*58,45+i%4*18,0,7);x.fill()}x.restore();
  // subtle vignette for a more cinematic, less flat presentation
  let vg=x.createRadialGradient(W*.5,Hh*.45,180,W*.5,Hh*.45,760);vg.addColorStop(.55,"rgba(0,0,0,0)");vg.addColorStop(1,"rgba(0,0,0,.34)");x.fillStyle=vg;x.fillRect(0,0,W,Hh);
+ // polished level-complete transition card
+ if(g.levelBanner&&g.t<g.levelBanner.until){let b=g.levelBanner,fade=Math.min(1,(b.until-g.t)*1.8);x.save();x.globalAlpha=fade*.96;let bw=Math.min(760,W-100),bx=(W-bw)/2,by=205;let lg=x.createLinearGradient(bx,by,bx+bw,by+125);lg.addColorStop(0,"rgba(14,22,30,.96)");lg.addColorStop(1,"rgba(35,30,45,.96)");x.fillStyle=lg;x.beginPath();x.roundRect(bx,by,bw,125,26);x.fill();x.strokeStyle="rgba(239,211,137,.65)";x.lineWidth=2;x.stroke();x.textAlign="center";x.fillStyle="#f4d98c";x.font="800 24px system-ui";x.fillText(b.title,W/2,by+43);x.fillStyle="#f4f6f8";x.font="600 16px system-ui";x.fillText(b.sub,W/2,by+78);x.fillStyle="#aeb8c4";x.font="12px system-ui";x.fillText("Neue Welt freigeschaltet",W/2,by+104);x.textAlign="start";x.restore()}
  // full-width readable riddle panel
  if(g.riddle){let r=g.riddle;x.save();x.fillStyle="rgba(9,13,20,.94)";x.beginPath();x.roundRect(70,28,W-140,150,22);x.fill();x.strokeStyle="rgba(210,190,130,.55)";x.lineWidth=2;x.stroke();x.fillStyle="#f5f1e8";x.font="700 17px system-ui";let words=r.q.split(" "),lines=[""];for(const w of words){let i=lines.length-1,t=(lines[i]+" "+w).trim();if(x.measureText(t).width>W-200)lines.push(w);else lines[i]=t}lines.forEach((v,i)=>x.fillText(v,95,62+i*23));x.font="600 15px system-ui";r.a.forEach((v,i)=>x.fillText((i+1)+": "+v,105+i*((W-210)/3),142));x.fillStyle="#b8c1cc";x.font="12px system-ui";x.fillText("Drücke 1, 2 oder 3 für deine Antwort.",95,166);x.restore()}
  x.save();x.translate(-g.cam,0);
@@ -162,7 +166,7 @@ function draw(){
  x.restore();\n // face highlight + rim
  x.fillStyle="#1b1513";x.beginPath();x.arc(5,-54,1.4,0,7);x.fill();x.strokeStyle=body;x.globalAlpha=.55;x.lineWidth=2;x.beginPath();x.arc(-1,-54,13,2.5,5.4);x.stroke();x.globalAlpha=1;x.restore();
  x.restore();
- let m=1+Math.floor(g.t/45)*.25+(D-1)*.5;ui.name.textContent=g.hero.name+" · "+g.hero.skill;ui.hp.textContent="HP "+Math.ceil(p.hp)+"/"+p.max;ui.coins.textContent="Beute "+g.coins+" ⬡";ui.mult.textContent="Risiko ×"+m.toFixed(2);ui.quest.textContent=g.done?"✓ Extrahiere am Portal":"Jagd "+g.kills+"/10 · Kristalle "+g.crystals+"/3";
+ let m=1+Math.floor(g.t/45)*.25+(D-1)*.5;ui.name.textContent=g.hero.name+" · "+g.hero.skill;ui.hp.textContent="HP "+Math.ceil(p.hp)+"/"+p.max;ui.coins.textContent="Beute "+g.coins+" ⬡";ui.mult.textContent="Risiko ×"+m.toFixed(2);let worldName=g.level===1?"Smaragd-Dschungel":g.level===2?"Sonnenwüste":"Frostgebirge";ui.quest.textContent=(g.done?"✓ Extrahiere am Portal":"Welt "+g.level+"/3 · "+worldName+" · Jagd "+g.kills+"/10 · Kristalle "+g.crystals+"/3");
 }
 function finish(ok){cancelAnimationFrame(raf);if(!G)return;let mult=1+Math.floor(G.t/45)*.25+(D-1)*.5,earned=ok?Math.floor(G.coins*mult):Math.floor(G.coins*.2);bank+=earned;localStorage.setItem("arcaneBank",bank);ui.bank.textContent="Tresor: "+bank+" ⬡";stage.hidden=true;over.hidden=false;document.querySelector("#overTitle").textContent=ok?"EXTRAKTION ERFOLGREICH":"RUN VERLOREN";document.querySelector("#summary").textContent=G.hero.name+" · "+G.kills+" Kills · "+Math.floor(G.t)+" Sek. · "+earned+" ⬡ gesichert.";G=null}
 function loop(t){if(!G)return;let dt=Math.min(.033,(t-last)/1000);last=t;update(dt);draw();raf=requestAnimationFrame(loop)}
