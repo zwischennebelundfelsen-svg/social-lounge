@@ -1,6 +1,28 @@
-<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Social Lounge – Bar 0.1.1</title><link rel="stylesheet" href="style.css"></head><body><div id="app">
-<canvas id="game"></canvas><div id="hud"><div class="brand">SOCIAL <span>LOUNGE</span><small>BAR • PROTOTYPE 0.1.1</small></div><div class="wallet"><b>◉ <span id="coins">50</span></b><small>LOUNGE COINS</small></div></div><div id="crosshair">+</div><div id="prompt"></div><div id="toast"></div>
-<div id="intro" class="panel"><div class="tag">NEXIFYGG PRESENTS</div><h1>Willkommen in der<br><em>Social Lounge</em></h1><p>Erkunde die Bar, verdiene Lounge Coins und entdecke den neuen Social Lounge TV.</p><button id="start">BAR BETRETEN</button><div class="keys"><span>WASD</span> bewegen · <span>MAUS</span> umsehen · <span>E</span> interagieren · <span>ESC</span> Maus lösen</div></div>
-<div id="menu" class="panel hidden"><h2>🍸 BAR-MENÜ</h2><p>Was darf es sein?</p><button data-buy="12" data-item="Cola">🥤 Cola <b>12 ◉</b></button><button data-buy="18" data-item="Mocktail">🍹 Lounge Mocktail <b>18 ◉</b></button><button data-buy="25" data-item="Premium Drink">✨ Premium Drink <b>25 ◉</b></button><button id="close">ZURÜCK</button></div>
-<div id="tvPanel" class="tv-panel hidden"><div class="tv-head"><div><b>📺 SOCIAL LOUNGE TV</b><small>YouTube Lounge</small></div><button id="tvClose">✕</button></div><form id="youtubeForm"><label for="youtubeUrl">YouTube-Link oder Video-ID</label><div class="urlrow"><input id="youtubeUrl" autocomplete="off" placeholder="https://www.youtube.com/watch?v=..."><button type="submit">VIDEO LADEN</button></div></form><p class="tv-note">Hinweis: Manche Videos dürfen vom Rechteinhaber nicht eingebettet werden.</p></div>
-<div id="help">Alle 60 Sek. aktive Lounge-Zeit: <b>+5 Coins</b></div></div><script type="module" src="game.js"></script></body></html>
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Arcane Hunt</title><link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+<header><div><b>ARCANE HUNT</b><span>Browser Action Roguelite</span></div><div id="bank">Tresor: 0 ⬡</div></header>
+<section id="menu" class="panel">
+<h1>Wähle deinen Jäger</h1><p>Jeder Run ist ein Risiko: Quests erfüllen, Beute sammeln, extrahieren – oder alles für einen höheren Multiplikator riskieren.</p>
+<div class="cards">
+<button class="hero selected" data-hero="bacon"><strong>BACON</strong><em>Brecher</em><span>Schrotflinte · viel Leben · Nahkampf-Bonus</span></button>
+<button class="hero" data-hero="nexify"><strong>NexifyGG</strong><em>Revolverheld</em><span>Doppelpistolen · Dash · hohe Mobilität</span></button>
+<button class="hero" data-hero="sinep"><strong>SINEP</strong><em>Arkanist</em><span>Runengewehr · Flächenschaden · Blink</span></button>
+</div>
+<div class="difficulty"><label>Schwierigkeit <select id="difficulty"><option value="1">Jäger</option><option value="1.35" selected>Veteran</option><option value="1.7">Albtraum</option></select></label><button id="start">RUN STARTEN</button></div>
+<div class="help">A/D bewegen · W/Leertaste springen · Maus zielen · Klick/F schießen · Shift Fähigkeit · E interagieren</div>
+</section>
+<main id="stage" hidden>
+<div id="hud"><span id="heroName"></span><span id="hp"></span><span id="coins"></span><span id="mult"></span><span id="quest"></span></div>
+<canvas id="game" width="1280" height="720" tabindex="0" aria-label="Arcane Hunt Spiel"></canvas>
+<div id="toast"></div>
+<div id="touch"><button data-k="left">◀</button><button data-k="right">▶</button><button data-k="jump">▲</button><button data-k="shoot">✦</button><button data-k="skill">⚡</button></div>
+</main>
+<section id="over" class="panel" hidden><h1 id="overTitle">Run beendet</h1><p id="summary"></p><button id="again">NOCH EIN RUN</button></section>
+</div><script src="game.js"></script>
+</body></html>
