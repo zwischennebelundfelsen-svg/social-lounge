@@ -16,10 +16,14 @@ function toast(s){ui.toast.textContent=s;ui.toast.style.opacity=1;clearTimeout(t
 function recthit(a,b){return a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y}
 function init(){
  D=+document.querySelector("#difficulty").value;const h=H[chosen];
- G={t:0,cam:0,coins:0,kills:0,crystals:0,quest:0,done:false,extraction:false,shots:[],enemies:[],parts:[],pickups:[],platforms:[],traps:[],player:{x:90,y:400,w:34,h:52,vx:0,vy:0,on:false,hp:h.hp,max:h.hp,lastShot:0,lastSkill:-9,inv:0,face:1},hero:h};
+ G={t:0,cam:0,coins:0,kills:0,crystals:0,quest:0,done:false,extraction:false,shots:[],enemies:[],parts:[],pickups:[],platforms:[],traps:[],chests:[],npcs:[],doors:[],player:{x:90,y:400,w:34,h:52,vx:0,vy:0,on:false,hp:h.hp,max:h.hp,lastShot:0,lastSkill:-9,inv:0,face:1},hero:h};
  const p=G.platforms;p.push({x:-200,y:610,w:900,h:120},{x:760,y:565,w:360,h:165},{x:1190,y:620,w:520,h:110},{x:1800,y:535,w:430,h:195},{x:2320,y:610,w:620,h:120},{x:3040,y:550,w:390,h:180},{x:3510,y:620,w:850,h:110},{x:4460,y:545,w:430,h:185},{x:4990,y:610,w:1100,h:120});
  [[390,480,180,20],[880,420,170,20],[1370,455,170,20],[1930,385,180,20],[2480,450,180,20],[3180,390,160,20],[3710,460,190,20],[4100,360,160,20],[4580,410,170,20],[5290,430,180,20]].forEach(a=>p.push({x:a[0],y:a[1],w:a[2],h:a[3]}));
  [710,1135,1720,2250,2960,3440,4380,4910].forEach(v=>G.traps.push({x:v,y:600,w:55,h:25}));
+ // Continuous themed regions: jungle -> desert -> mountains
+ G.npcs.push({x:210,y:555,name:"Milo",text:"Der Dschungel verschluckt jeden unvorsichtigen Jäger."},{x:2180,y:480,name:"Rashid",text:"Hinter den Dünen liegen alte Kammern."},{x:4240,y:565,name:"Eira",text:"Im Gebirge wartet etwas in der Höhle."});
+ G.chests.push({x:560,y:440,open:false},{x:1540,y:580,open:false},{x:2700,y:410,open:false},{x:3380,y:510,open:false},{x:4720,y:505,open:false},{x:5480,y:390,open:false});
+ G.doors.push({x:1960,y:475,w:55,h:60,kind:"temple"},{x:4620,y:485,w:70,h:60,kind:"cave"});
  for(let i=0;i<16;i++)spawnEnemy(520+i*320,rnd(320,510),i%5===0?"wraith":"hound");
  for(let i=0;i<18;i++)G.pickups.push({x:300+i*310,y:rnd(280,470),r:9,type:i%4===0?"crystal":"coin",alive:true});
  menu.hidden=true;over.hidden=true;stage.hidden=false;last=performance.now();cancelAnimationFrame(raf);raf=requestAnimationFrame(loop);toast("Auftrag: 10 Kreaturen jagen + 3 Runenkristalle");
@@ -62,6 +66,27 @@ function draw(){
  let grd=x.createLinearGradient(0,0,0,Hh);grd.addColorStop(0,"#111827");grd.addColorStop(.55,"#202735");grd.addColorStop(1,"#090b0f");x.fillStyle=grd;x.fillRect(0,0,W,Hh);
  x.globalAlpha=.18;for(let i=0;i<18;i++){let px=((i*173-g.cam*.18)%1500+1500)%1500;x.fillStyle="#9fa9ba";x.beginPath();x.arc(px,140+(i%5)*54,80+i%3*35,0,7);x.fill()}x.globalAlpha=1;
  x.save();x.translate(-g.cam,0);
+ // biome scenery and seamless region transitions
+ for(let wx=0;wx<6000;wx+=180){
+   if(wx<2000){ // jungle
+    x.fillStyle="#173c31";x.fillRect(wx+55,270,22,340);x.fillStyle="#245d45";x.beginPath();x.arc(wx+65,255,75,0,7);x.arc(wx+105,285,55,0,7);x.fill();
+    x.strokeStyle="#3b7457";x.lineWidth=5;x.beginPath();x.moveTo(wx+125,120);x.bezierCurveTo(wx+80,240,wx+165,330,wx+105,430);x.stroke();
+   }else if(wx<4000){ // desert
+    x.fillStyle="#b99055";x.beginPath();x.moveTo(wx,570);x.quadraticCurveTo(wx+90,500,wx+180,570);x.fill();
+    if(wx%360===0){x.fillStyle="#7d6a4b";x.fillRect(wx+80,430,55,140);x.fillStyle="#c3a56b";x.fillRect(wx+70,425,75,16)}
+   }else{ // mountains
+    x.fillStyle="#4d5663";x.beginPath();x.moveTo(wx,560);x.lineTo(wx+85,260);x.lineTo(wx+180,560);x.fill();x.fillStyle="#cbd3dc";x.beginPath();x.moveTo(wx+65,330);x.lineTo(wx+85,260);x.lineTo(wx+108,335);x.fill();
+   }
+ }
+ // region title signs
+ x.font="700 22px system-ui";x.fillStyle="#dff7df";x.fillText("I  SMARAGD-DSCHUNGEL",120,95);x.fillStyle="#ffe1a1";x.fillText("II  SONNENWÜSTE",2140,95);x.fillStyle="#e2e9f2";x.fillText("III  FROSTGEBIRGE",4140,95);
+ // NPCs
+ for(const n of g.npcs){x.fillStyle="#d2a084";x.beginPath();x.arc(n.x,n.y-36,9,0,7);x.fill();x.fillStyle="#384657";x.beginPath();x.roundRect(n.x-13,n.y-28,26,35,8);x.fill();x.fillStyle="#fff";x.font="13px system-ui";x.fillText(n.name,n.x-18,n.y-52);if(Math.abs(p.x-n.x)<105){x.fillStyle="#111d";x.beginPath();x.roundRect(n.x-85,n.y-105,170,38,8);x.fill();x.fillStyle="#fff";x.font="11px system-ui";x.fillText(n.text.slice(0,28),n.x-78,n.y-82)}}
+ // treasure chests: proximity opens and loots
+ for(const c of g.chests){if(!c.open&&Math.abs(p.x-c.x)<48&&Math.abs(p.y-c.y)<90){c.open=true;g.coins+=18;toast("Schatztruhe: +18 ⬡");}x.fillStyle=c.open?"#7a5a32":"#b57b32";x.beginPath();x.roundRect(c.x,c.y,42,28,5);x.fill();x.strokeStyle="#e8bd61";x.lineWidth=3;x.strokeRect(c.x+4,c.y+5,34,20);if(c.open){x.fillStyle="#e8bd61";x.fillRect(c.x+4,c.y-8,34,8)}}
+ // temple door and cave mouth
+ for(const d of g.doors){x.fillStyle=d.kind==="cave"?"#080b10":"#584936";x.beginPath();x.roundRect(d.x,d.y,d.w,d.h,18,18);x.fill();x.strokeStyle=d.kind==="cave"?"#737f8e":"#c39b58";x.lineWidth=4;x.stroke()}
+
  for(const q of g.platforms){x.fillStyle="#252b31";x.fillRect(q.x,q.y,q.w,q.h);x.fillStyle="#3e493f";x.fillRect(q.x,q.y,q.w,8);x.fillStyle="#171b20";for(let k=q.x+20;k<q.x+q.w;k+=70)x.fillRect(k,q.y+22,3,45)}
  for(const t of g.traps){x.fillStyle="#a54d45";for(let k=0;k<4;k++){x.beginPath();x.moveTo(t.x+k*14,t.y+t.h);x.lineTo(t.x+7+k*14,t.y);x.lineTo(t.x+14+k*14,t.y+t.h);x.fill()}}
  for(const c of g.pickups)if(c.alive){x.fillStyle=c.type==="coin"?"#e2bd5b":"#8c6be8";x.beginPath();x.arc(c.x,c.y,c.r+Math.sin(g.t*4+c.x)*2,0,7);x.fill()}
