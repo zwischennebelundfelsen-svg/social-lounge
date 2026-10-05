@@ -27,10 +27,12 @@ function init(){
  G.pickups.push({x:980,y:380,r:11,type:"key",alive:true},{x:1680,y:560,r:11,type:"key",alive:true});
  [[4080,500,130,18],[4300,410,145,18],[4520,330,125,18],[4770,405,160,18],[5050,325,135,18],[5320,470,150,18]].forEach(a=>p.push({x:a[0],y:a[1],w:a[2],h:a[3]}));
  for(let i=0;i<16;i++)spawnEnemy(520+i*320,rnd(320,510),i%5===0?"wraith":"hound");
+ for(let i=0;i<7;i++)spawnEnemy(4070+i*235,rnd(350,520),"skeleton");
+ G.boss={x:5630,y:455,w:92,h:110,hp:850*D,max:850*D,cd:1,alive:true,awake:false};
  for(let i=0;i<18;i++)G.pickups.push({x:300+i*310,y:rnd(280,470),r:9,type:i%4===0?"crystal":"coin",alive:true});
  menu.hidden=true;over.hidden=true;stage.hidden=false;last=performance.now();cancelAnimationFrame(raf);raf=requestAnimationFrame(loop);toast("Auftrag: 10 Kreaturen jagen + 3 Runenkristalle");
 }
-function spawnEnemy(px,py,type){G.enemies.push({x:px,y:py,w:type==="wraith"?38:45,h:type==="wraith"?46:34,vx:0,vy:0,hp:(type==="wraith"?75:95)*D,max:(type==="wraith"?75:95)*D,type,cd:rnd(0,1),alive:true})}
+function spawnEnemy(px,py,type){G.enemies.push({x:px,y:py,w:type==="wraith"?38:45,h:type==="wraith"?46:34,vx:0,vy:0,hp:(type==="wraith"?75:type==="skeleton"?125:95)*D,max:(type==="wraith"?75:type==="skeleton"?125:95)*D,type,cd:rnd(0,1),alive:true})}
 function shoot(){
  const g=G,p=g.player,h=g.hero,now=g.t;if(now-p.lastShot<h.rate/1000)return;p.lastShot=now;
  let ax=(pointer.x-(p.x-g.cam+p.w/2)),ay=(pointer.y-(p.y+p.h/2)),ang=Math.atan2(ay,ax);if(Math.abs(ax)>10)p.face=Math.sign(ax);
@@ -55,10 +57,11 @@ function update(dt){
  for(const s of g.shots){s.x+=s.vx*dt;s.y+=s.vy*dt;s.life-=dt;if(s.enemy&&recthit({x:s.x-s.r,y:s.y-s.r,w:s.r*2,h:s.r*2},p)){s.life=0;hurt(s.d)}
   if(!s.enemy)for(const e of g.enemies)if(e.alive&&s.life>0&&recthit({x:s.x-s.r,y:s.y-s.r,w:s.r*2,h:s.r*2},e)){e.hp-=s.d*(G.rage?1.55:1);s.life=0;burst(s.x,s.y,h.color);if(s.magic)for(const z of g.enemies)if(z!==e&&z.alive&&Math.hypot(z.x-e.x,z.y-e.y)<100)z.hp-=s.d*.55;if(e.hp<=0){e.alive=false;g.kills++;g.coins+=3;burst(e.x,e.y,"#d4b66e")}}}
  g.shots=g.shots.filter(s=>s.life>0&&s.x>-100&&s.x<6300);
- for(const e of g.enemies){if(!e.alive)continue;let dx=p.x-e.x,dy=p.y-e.y;if(e.type==="hound"){e.vx=Math.sign(dx)*90*D;e.x+=e.vx*dt;if(Math.abs(dx)<50&&Math.abs(dy)<70&&e.cd<=0){hurt(13*D);e.cd=1.05}}else{e.y+=Math.sin(g.t*2+e.x)*20*dt;e.x+=Math.sign(dx)*45*dt;if(Math.abs(dx)<520&&e.cd<=0){let a=Math.atan2(p.y-e.y,p.x-e.x);g.shots.push({x:e.x,y:e.y,vx:Math.cos(a)*330,vy:Math.sin(a)*330,r:5,d:12*D,life:2,enemy:true});e.cd=1.7/D}}e.cd-=dt}
+ for(const e of g.enemies){if(!e.alive)continue;let dx=p.x-e.x,dy=p.y-e.y;if(e.type==="hound"||e.type==="skeleton"){e.vx=Math.sign(dx)*(e.type==="skeleton"?62:90)*D;e.x+=e.vx*dt;if(Math.abs(dx)<50&&Math.abs(dy)<70&&e.cd<=0){hurt(13*D);e.cd=1.05}}else{e.y+=Math.sin(g.t*2+e.x)*20*dt;e.x+=Math.sign(dx)*45*dt;if(Math.abs(dx)<520&&e.cd<=0){let a=Math.atan2(p.y-e.y,p.x-e.x);g.shots.push({x:e.x,y:e.y,vx:Math.cos(a)*330,vy:Math.sin(a)*330,r:5,d:12*D,life:2,enemy:true});e.cd=1.7/D}}e.cd-=dt}
  for(const c of g.pickups)if(c.alive&&Math.hypot(p.x-c.x,p.y-c.y)<48){c.alive=false;if(c.type==="coin")g.coins+=5;else if(c.type==="key"){g.keysFound++;toast("Tempelschluessel "+g.keysFound+"/2");if(g.keysFound>=2){let d=g.doors.find(v=>v.kind==="temple");if(d)d.locked=false;}}else{g.crystals++;toast("Runenkristall "+g.crystals+"/3")}}
  for(const z of g.parts){z.x+=z.vx*dt;z.y+=z.vy*dt;z.vy+=300*dt;z.life-=dt}g.parts=g.parts.filter(z=>z.life>0);
  let gate=g.doors.find(v=>v.kind==="temple");if(gate&&gate.locked&&p.x>gate.x-35&&p.x<gate.x+70){p.x=gate.x-38;p.vx=0;}
+ let boss=g.boss;if(boss&&boss.alive&&p.x>5250){boss.awake=true;boss.cd-=dt;let dx=p.x-boss.x;boss.x+=Math.sign(dx)*30*dt;if(boss.cd<=0){let a=Math.atan2(p.y-boss.y,p.x-boss.x);g.shots.push({x:boss.x,y:boss.y+35,vx:Math.cos(a)*390,vy:Math.sin(a)*390,r:9,d:22*D,life:2.2,enemy:true});boss.cd=1.1/D}for(const sh of g.shots)if(!sh.enemy&&sh.life>0&&recthit({x:sh.x-sh.r,y:sh.y-sh.r,w:sh.r*2,h:sh.r*2},boss)){boss.hp-=sh.d;sh.life=0;if(boss.hp<=0){boss.alive=false;g.coins+=80;g.extraction=true;toast("BERGKOENIG BESIEGT! +80")}}}
  if(!g.done&&g.kills>=10&&g.crystals>=3){g.done=true;g.extraction=true;toast("HAUPTZIEL ERFÜLLT – Portal am Ende geöffnet!")}
  if(g.extraction&&p.x>5800)finish(true);if(p.hp<=0)finish(false);
 }
@@ -93,8 +96,9 @@ function draw(){
  for(const q of g.platforms){x.fillStyle="#252b31";x.fillRect(q.x,q.y,q.w,q.h);x.fillStyle="#3e493f";x.fillRect(q.x,q.y,q.w,8);x.fillStyle="#171b20";for(let k=q.x+20;k<q.x+q.w;k+=70)x.fillRect(k,q.y+22,3,45)}
  for(const t of g.traps){x.fillStyle="#a54d45";for(let k=0;k<4;k++){x.beginPath();x.moveTo(t.x+k*14,t.y+t.h);x.lineTo(t.x+7+k*14,t.y);x.lineTo(t.x+14+k*14,t.y+t.h);x.fill()}}
  for(const c of g.pickups)if(c.alive){x.fillStyle=c.type==="coin"?"#e2bd5b":"#8c6be8";x.beginPath();x.arc(c.x,c.y,c.r+Math.sin(g.t*4+c.x)*2,0,7);x.fill()}
- for(const e of g.enemies)if(e.alive){x.fillStyle=e.type==="hound"?"#7e3940":"#5b4b77";x.fillRect(e.x,e.y,e.w,e.h);x.fillStyle="#f25d57";x.fillRect(e.x+8,e.y+8,5,4);x.fillRect(e.x+e.w-13,e.y+8,5,4);x.fillStyle="#101319";x.fillRect(e.x,e.y-8,e.w,4);x.fillStyle="#b64f50";x.fillRect(e.x,e.y-8,e.w*(e.hp/e.max),4)}
+ for(const e of g.enemies)if(e.alive){if(e.type==="skeleton"){x.strokeStyle="#ded9c8";x.lineWidth=6;x.lineCap="round";x.beginPath();x.arc(e.x+20,e.y+9,9,0,7);x.moveTo(e.x+20,e.y+18);x.lineTo(e.x+20,e.y+32);x.moveTo(e.x+20,e.y+23);x.lineTo(e.x+7,e.y+31);x.moveTo(e.x+20,e.y+23);x.lineTo(e.x+34,e.y+31);x.moveTo(e.x+20,e.y+32);x.lineTo(e.x+10,e.y+45);x.moveTo(e.x+20,e.y+32);x.lineTo(e.x+31,e.y+45);x.stroke()}else{x.fillStyle=e.type==="hound"?"#7e3940":"#5b4b77";x.beginPath();x.roundRect(e.x,e.y,e.w,e.h,11);x.fill();}x.fillStyle="#f25d57";x.fillRect(e.x+8,e.y+8,5,4);x.fillRect(e.x+e.w-13,e.y+8,5,4);x.fillStyle="#101319";x.fillRect(e.x,e.y-8,e.w,4);x.fillStyle="#b64f50";x.fillRect(e.x,e.y-8,e.w*(e.hp/e.max),4)}
  if(g.extraction){x.strokeStyle="#77e1bd";x.lineWidth=8;x.beginPath();x.ellipse(5890,500,45,90,0,0,7);x.stroke();x.fillStyle="#77e1bd22";x.fillRect(5845,410,90,180)}
+ if(g.boss&&g.boss.alive&&g.boss.awake){let b=g.boss;x.save();x.shadowBlur=24;x.shadowColor="#9d68d8";x.fillStyle="#2d2439";x.beginPath();x.roundRect(b.x,b.y,b.w,b.h,24);x.fill();x.shadowBlur=0;x.fillStyle="#ff667b";x.beginPath();x.arc(b.x+29,b.y+35,5,0,7);x.arc(b.x+63,b.y+35,5,0,7);x.fill();x.fillStyle="#111";x.fillRect(b.x,b.y-15,b.w,7);x.fillStyle="#b98cff";x.fillRect(b.x,b.y-15,b.w*b.hp/b.max,7);x.restore();}
  for(const s of g.shots){x.fillStyle=s.enemy?"#ef6259":s.magic?"#c391ff":"#ffd778";x.beginPath();x.arc(s.x,s.y,s.r,0,7);x.fill()}
  for(const z of g.parts){x.globalAlpha=clamp(z.life*2,0,1);x.fillStyle=z.c;x.fillRect(z.x,z.y,4,4)}x.globalAlpha=1;
  // Distinct human 2.5D character silhouettes
