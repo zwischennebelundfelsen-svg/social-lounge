@@ -3,7 +3,7 @@ const C=document.querySelector("#game"),x=C.getContext("2d"),menu=document.query
 const ui={hp:document.querySelector("#hp"),coins:document.querySelector("#coins"),mult:document.querySelector("#mult"),quest:document.querySelector("#quest"),name:document.querySelector("#heroName"),bank:document.querySelector("#bank"),toast:document.querySelector("#toast")};
 let chosen="bacon",D=1.35,raf=0,last=0,G=null,bank=Number(localStorage.getItem("arcaneBank")||0);
 let AC=null,master=null,musicTimer=0,lastBiome=-1;
-function startAudio(){if(AC){if(AC.state==="suspended")AC.resume();return}AC=new (window.AudioContext||window.webkitAudioContext)();master=AC.createGain();master.gain.value=.18;master.connect(AC.destination)}
+function startAudio(){try{if(AC){if(AC.state==="suspended")AC.resume();return}const AudioCtor=window.AudioContext||window.webkitAudioContext;if(!AudioCtor)return;AC=new AudioCtor();master=AC.createGain();master.gain.value=.18;master.connect(AC.destination)}catch(e){AC=null;master=null}}
 function tone(freq,dur,vol=.05,type="sine",when=0){if(!AC)return;let o=AC.createOscillator(),v=AC.createGain(),t=AC.currentTime+when;o.type=type;o.frequency.value=freq;v.gain.setValueAtTime(0,t);v.gain.linearRampToValueAtTime(vol,t+.02);v.gain.exponentialRampToValueAtTime(.001,t+dur);o.connect(v);v.connect(master);o.start(t);o.stop(t+dur+.03)}
 function noise(dur=.08,vol=.025,when=0){if(!AC)return;let n=AC.createBufferSource(),b=AC.createBuffer(1,AC.sampleRate*dur,AC.sampleRate);let d=b.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*(1-i/d.length);let v=AC.createGain();v.gain.value=vol;n.buffer=b;n.connect(v);v.connect(master);n.start(AC.currentTime+when)}
 function ambience(g){if(!AC)return;let biome=g.player.x<2000?0:g.player.x<4000?1:2;if(biome!==lastBiome){lastBiome=biome;toast(["Dschungel-Lo-Fi","Wuesten-Lo-Fi","Berg-Lo-Fi"][biome])}if(g.t<musicTimer)return;musicTimer=g.t+2.4;let roots=[[110,165,220],[98,147,196],[82.4,123.5,164.8]][biome],r=roots[(Math.floor(g.t/2.4))%3];tone(r,2.2,.035,"sine");tone(r*2,1.5,.018,"triangle",.12);tone(r*1.5,.7,.014,"sine",1.15);noise(.055,.018,.02);noise(.045,.012,1.2);if(biome===0){tone(880,0.12,.008,"sine",.7)}else if(biome===1){noise(.32,.006,.55)}else{tone(329.6,.9,.008,"sine",.65)}}
@@ -21,7 +21,7 @@ function rnd(a,b){return a+Math.random()*(b-a)} function clamp(v,a,b){return Mat
 function toast(s){ui.toast.textContent=s;ui.toast.style.opacity=1;clearTimeout(toast.t);toast.t=setTimeout(()=>ui.toast.style.opacity=0,1500)}
 function recthit(a,b){return a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y}
 function init(){
- startAudio();musicTimer=0;lastBiome=-1;
+ menu.hidden=true;over.hidden=true;stage.hidden=false;startAudio();musicTimer=0;lastBiome=-1;
  D=+document.querySelector("#difficulty").value;const h=H[chosen];
  G={t:0,cam:0,coins:0,kills:0,crystals:0,quest:0,done:false,extraction:false,shots:[],enemies:[],parts:[],pickups:[],platforms:[],traps:[],chests:[],npcs:[],doors:[],keysFound:0,boss:null,riddle:null,riddlesDone:0,level:1,levelBanner:null,levelSeen:[false,false,false],player:{x:90,y:400,w:34,h:52,vx:0,vy:0,on:false,hp:h.hp,max:h.hp,lastShot:0,lastSkill:-9,inv:0,face:1},hero:h};
  const p=G.platforms;p.push({x:-200,y:610,w:900,h:120},{x:760,y:565,w:360,h:165},{x:1190,y:620,w:520,h:110},{x:1800,y:535,w:430,h:195},{x:2320,y:610,w:620,h:120},{x:3040,y:550,w:390,h:180},{x:3510,y:620,w:850,h:110},{x:4460,y:545,w:430,h:185},{x:4990,y:610,w:1100,h:120});
@@ -42,7 +42,7 @@ function init(){
  for(let i=0;i<7;i++)spawnEnemy(4070+i*235,rnd(350,520),"skeleton");
  G.boss={x:5630,y:455,w:92,h:110,hp:850*D,max:850*D,cd:1,alive:true,awake:false};
  for(let i=0;i<18;i++)G.pickups.push({x:300+i*310,y:rnd(280,470),r:9,type:i%4===0?"crystal":"coin",alive:true});
- menu.hidden=true;over.hidden=true;stage.hidden=false;last=performance.now();cancelAnimationFrame(raf);raf=requestAnimationFrame(loop);toast("Auftrag: 10 Kreaturen jagen + 3 Runenkristalle");
+ last=performance.now();cancelAnimationFrame(raf);raf=requestAnimationFrame(loop);toast("Auftrag: 10 Kreaturen jagen + 3 Runenkristalle");
 }
 function spawnEnemy(px,py,type){G.enemies.push({x:px,y:py,w:type==="wraith"?38:45,h:type==="wraith"?46:34,vx:0,vy:0,hp:(type==="wraith"?75:type==="skeleton"?125:95)*D,max:(type==="wraith"?75:type==="skeleton"?125:95)*D,type,cd:rnd(0,1),alive:true})}
 function shoot(){
@@ -174,4 +174,4 @@ function draw(){
 }
 function finish(ok){cancelAnimationFrame(raf);if(!G)return;let mult=1+Math.floor(G.t/45)*.25+(D-1)*.5,earned=ok?Math.floor(G.coins*mult):Math.floor(G.coins*.2);bank+=earned;localStorage.setItem("arcaneBank",bank);ui.bank.textContent="Tresor: "+bank+" ⬡";stage.hidden=true;over.hidden=false;document.querySelector("#overTitle").textContent=ok?"EXTRAKTION ERFOLGREICH":"RUN VERLOREN";document.querySelector("#summary").textContent=G.hero.name+" · "+G.kills+" Kills · "+Math.floor(G.t)+" Sek. · "+earned+" ⬡ gesichert.";G=null}
 function loop(t){if(!G)return;let dt=Math.min(.033,(t-last)/1000);last=t;update(dt);draw();raf=requestAnimationFrame(loop)}
-document.querySelector("#start").onclick=init;document.querySelector("#again").onclick=()=>{over.hidden=true;menu.hidden=false};})();
+document.querySelector("#start").addEventListener("click",()=>{try{init()}catch(err){console.error(err);menu.hidden=false;stage.hidden=true;ui.toast.textContent="Startfehler: Bitte Seite neu laden.";ui.toast.style.opacity=1}});document.querySelector("#again").onclick=()=>{over.hidden=true;menu.hidden=false};})();
