@@ -59,7 +59,11 @@ function skill(){
 function update(dt){
  const g=G,p=g.player,h=g.hero;g.t+=dt;ambience(g);
  let currentLevel=p.x<2000?1:p.x<4000?2:3;
- if(currentLevel!==g.level){let old=g.level;g.level=currentLevel;g.levelBanner={until:g.t+4,title:"LEVEL "+old+" ERFOLGREICH BEENDET!",sub:old===1?"Jawohl! Der Dschungel liegt hinter dir. Weiter geht's in die Sonnenwüste!":old===2?"Chaka, du schaffst das! Die Wüste ist bezwungen. Auf ins Frostgebirge!":"Stark gespielt! Die nächste Welt wartet."};tone(523,.18,.035,"sine");tone(659,.18,.03,"sine",.16);tone(784,.3,.03,"sine",.32)}
+ // A world only counts as completed after its objective has actually been solved.
+ let canAdvance=g.level===1?g.riddlesDone>=1:g.level===2?g.riddlesDone>=2:true;
+ let boundary=g.level===1?1960:3960;
+ if(!canAdvance&&p.x>boundary){p.x=boundary-38;p.vx=0;toast(g.level===1?"Der Dschungeltempel ist noch nicht gelöst. Finde und löse das Rätsel.":"Die Sonnenwüste gibt den Weg noch nicht frei. Löse das Ruinenrätsel.")}
+ if(currentLevel>g.level&&canAdvance){let old=g.level;g.level=currentLevel;g.levelBanner={until:g.t+4,title:"LEVEL "+old+" ERFOLGREICH BEENDET!",sub:old===1?"Jawohl, du Sinep! Der Dschungeltempel ist geschafft. Weiter geht's in die Sonnenwüste!":"Chaka, du schaffst das! Die Wüstenruine ist bezwungen. Auf ins Frostgebirge!"};tone(523,.18,.035,"sine");tone(659,.18,.03,"sine",.16);tone(784,.3,.03,"sine",.32)}
  // Giana-Sisters-inspired progression: movement challenges lead into self-contained puzzle gates.
  if(!g.riddle){for(const r of g.riddleStations||[])if(!r.done&&Math.abs(p.x-r.x)<70){g.riddle=r;toast("Rätsel entdeckt – antworte mit 1, 2 oder 3.");break}}
  if(g.riddle){let pick=keys["1"]?1:keys["2"]?2:keys["3"]?3:0;if(pick){keys[String(pick)]=false;if(pick===g.riddle.correct){g.riddle.done=true;g.riddlesDone++;g.coins+=20;toast("Richtig! Der Weg reagiert auf deine Lösung.");g.riddle=null;if(g.riddlesDone>=1){let d=g.doors.find(v=>v.kind==="temple");if(d)d.locked=false}if(g.riddlesDone>=3){let d=g.doors.find(v=>v.kind==="cave");if(d)d.locked=false}}else{toast("Falsch. Beobachte die Hinweise und versuche es erneut.");p.hp=Math.max(1,p.hp-12);}}}p.inv=Math.max(0,p.inv-dt);if(G.rage)G.rage=Math.max(0,G.rage-dt);
