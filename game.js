@@ -14,7 +14,7 @@ const H={
  nexify:{name:"NexifyGG",hp:115,speed:340,jump:620,rate:145,damage:19,pellets:1,spread:.035,color:"#65c7e8",skill:"Dash"},
  sinep:{name:"SINEP",hp:100,speed:285,jump:590,rate:360,damage:42,pellets:1,spread:.02,color:"#b98cff",skill:"Blink"}
 };
-const keys={},pointer={x:900,y:350,down:false}; addEventListener("keydown",e=>{keys[e.key.toLowerCase()]=true;if([" ","arrowup","arrowdown"].includes(e.key.toLowerCase()))e.preventDefault()});addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
+const keys={},pointer={x:900,y:350,down:false};let interactPressed=false; addEventListener("keydown",e=>{let k=e.key.toLowerCase();if(k==="e"&&!keys.e)interactPressed=true;keys[k]=true;if([" ","arrowup","arrowdown"].includes(e.key.toLowerCase()))e.preventDefault()});addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
 C.addEventListener("pointermove",e=>{const r=C.getBoundingClientRect();pointer.x=(e.clientX-r.left)*C.width/r.width;pointer.y=(e.clientY-r.top)*C.height/r.height});C.addEventListener("pointerdown",()=>{pointer.down=true;C.focus()});addEventListener("pointerup",()=>pointer.down=false);
 document.querySelectorAll("#touch button").forEach(b=>{const k=b.dataset.k,map={left:"a",right:"d",jump:" ",shoot:"f",skill:"shift"};for(const ev of ["pointerdown","pointerup","pointercancel"])b.addEventListener(ev,e=>{e.preventDefault();keys[map[k]]=ev==="pointerdown"})});
 function rnd(a,b){return a+Math.random()*(b-a)} function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
@@ -70,7 +70,7 @@ function update(dt){
  let gate=g.doors.find(v=>v.kind==="temple");if(gate&&gate.locked&&p.x>gate.x-35&&p.x<gate.x+70){p.x=gate.x-38;p.vx=0;}
  let boss=g.boss;if(boss&&boss.alive&&p.x>5250){boss.awake=true;boss.cd-=dt;let dx=p.x-boss.x;boss.x+=Math.sign(dx)*30*dt;if(boss.cd<=0){let a=Math.atan2(p.y-boss.y,p.x-boss.x);g.shots.push({x:boss.x,y:boss.y+35,vx:Math.cos(a)*390,vy:Math.sin(a)*390,r:9,d:22*D,life:2.2,enemy:true});boss.cd=1.1/D}for(const sh of g.shots)if(!sh.enemy&&sh.life>0&&recthit({x:sh.x-sh.r,y:sh.y-sh.r,w:sh.r*2,h:sh.r*2},boss)){boss.hp-=sh.d;sh.life=0;if(boss.hp<=0){boss.alive=false;g.coins+=80;g.extraction=true;toast("BERGKOENIG BESIEGT! +80")}}}
  if(!g.done&&g.kills>=10&&g.crystals>=3){g.done=true;g.extraction=true;toast("HAUPTZIEL ERFÜLLT – Portal am Ende geöffnet!")}
- if(g.extraction&&p.x>5800)finish(true);if(p.hp<=0)finish(false);
+ if(g.extraction&&p.x>5800)finish(true);if(p.hp<=0)finish(false);interactPressed=false;
 }
 function hurt(n){noise(.12,.035);tone(72,.14,.025,"sawtooth");const p=G.player;if(p.inv>0)return;p.hp-=n;p.inv=.7;burst(p.x,p.y,"#ff665c")}
 function burst(px,py,c){for(let i=0;i<8;i++)G.parts.push({x:px,y:py,vx:rnd(-140,140),vy:rnd(-180,30),life:rnd(.25,.7),c})}
@@ -94,9 +94,9 @@ function draw(){
  // region title signs
  x.font="700 22px system-ui";x.fillStyle="#dff7df";x.fillText("I  SMARAGD-DSCHUNGEL",120,95);x.fillStyle="#ffe1a1";x.fillText("II  SONNENWÜSTE",2140,95);x.fillStyle="#e2e9f2";x.fillText("III  FROSTGEBIRGE",4140,95);
  // NPCs
- for(const n of g.npcs){x.fillStyle="#d2a084";x.beginPath();x.arc(n.x,n.y-36,9,0,7);x.fill();x.fillStyle="#384657";x.beginPath();x.roundRect(n.x-13,n.y-28,26,35,8);x.fill();x.fillStyle="#fff";x.font="13px system-ui";x.fillText(n.name,n.x-18,n.y-52);if(Math.abs(p.x-n.x)<105){x.fillStyle="#111d";x.beginPath();x.roundRect(n.x-85,n.y-105,170,38,8);x.fill();x.fillStyle="#fff";x.font="11px system-ui";x.fillText(n.text.slice(0,28),n.x-78,n.y-82)}}
+ for(const n of g.npcs){x.fillStyle="#d2a084";x.beginPath();x.arc(n.x,n.y-36,9,0,7);x.fill();x.fillStyle="#384657";x.beginPath();x.roundRect(n.x-13,n.y-28,26,35,8);x.fill();x.fillStyle="#fff";x.font="13px system-ui";x.fillText(n.name,n.x-18,n.y-52);if(Math.abs(p.x-n.x)<125){let words=n.text.split(" "),lines=[""];for(const w of words){let i=lines.length-1,t=(lines[i]+" "+w).trim();if(x.measureText(t).width>230)lines.push(w);else lines[i]=t}let bh=28+lines.length*17;x.fillStyle="#111e";x.beginPath();x.roundRect(n.x-125,n.y-92-bh,250,bh,10);x.fill();x.fillStyle="#fff";x.font="12px system-ui";lines.forEach((line,i)=>x.fillText(line,n.x-115,n.y-104-bh+(i+1)*17))}}
  // treasure chests: proximity opens and loots
- for(const c of g.chests){if(!c.open&&Math.abs(p.x-c.x)<48&&Math.abs(p.y-c.y)<90){c.open=true;g.coins+=18;toast("Schatztruhe: +18 ⬡");}x.fillStyle=c.open?"#7a5a32":"#b57b32";x.beginPath();x.roundRect(c.x,c.y,42,28,5);x.fill();x.strokeStyle="#e8bd61";x.lineWidth=3;x.strokeRect(c.x+4,c.y+5,34,20);if(c.open){x.fillStyle="#e8bd61";x.fillRect(c.x+4,c.y-8,34,8)}}
+ for(const c of g.chests){let near=Math.abs(p.x-c.x)<72&&Math.abs(p.y-c.y)<100;if(!c.open&&near&&interactPressed){c.open=true;g.coins+=18;toast("Schatztruhe geöffnet: +18 ⬡");tone(659,.12,.03,"sine");tone(988,.2,.025,"sine",.1)}x.fillStyle=c.open?"#7a5a32":"#b57b32";x.beginPath();x.roundRect(c.x,c.y,42,28,5);x.fill();x.strokeStyle="#e8bd61";x.lineWidth=3;x.strokeRect(c.x+4,c.y+5,34,20);if(c.open){x.fillStyle="#e8bd61";x.fillRect(c.x+4,c.y-8,34,8)}else if(near){x.fillStyle="#fff";x.font="700 12px system-ui";x.fillText("[E] Truhe öffnen",c.x-28,c.y-14)}}
  // temple door and cave mouth
  for(const d of g.doors){x.fillStyle=d.kind==="cave"?"#080b10":"#584936";x.beginPath();x.roundRect(d.x,d.y,d.w,d.h,18,18);x.fill();x.strokeStyle=d.kind==="cave"?"#737f8e":"#c39b58";x.lineWidth=4;x.stroke()}
 
@@ -112,7 +112,7 @@ function draw(){
  x.save();x.translate(p.x+p.w/2,p.y+p.h);if(p.face<0)x.scale(-1,1);
  const moving=Math.abs(p.vx)>35, airborne=!p.on, phase=moving?Math.sin(g.t*(8+Math.abs(p.vx)/70)):0;
  const bob=airborne?-3:Math.abs(phase)*1.8, legSwing=airborne?5:phase*7, armSwing=airborne?-4:phase*3;
- const recoil=Math.max(0,1-(g.t-p.lastShot)*9)*7;
+ const recoil=Math.max(0,1-(g.t-p.lastShot)*9)*7, aimY=pointer.y-(p.y+p.h/2),aimX=Math.max(40,Math.abs(pointer.x-(p.x-g.cam+p.w/2))),aimAngle=clamp(Math.atan2(aimY,aimX),-.75,.75);
  x.translate(0,bob);
  x.globalAlpha=.3;x.fillStyle="#000";x.beginPath();x.ellipse(0,4,24,7,0,0,Math.PI*2);x.fill();x.globalAlpha=1;
  const flash=p.inv>0&&Math.floor(g.t*16)%2, body=flash?"#fff":g.hero.color;
@@ -124,8 +124,7 @@ function draw(){
  let shoulder=isB?20:isS?13:15, waist=isB?14:isS?9:11;
  let bg=x.createLinearGradient(-20,-47,20,-17);bg.addColorStop(0,body);bg.addColorStop(1,"#222832");x.fillStyle=bg;
  x.beginPath();x.moveTo(-shoulder,-43);x.quadraticCurveTo(0,-50,shoulder,-43);x.lineTo(waist,-18);x.quadraticCurveTo(0,-13,-waist,-18);x.closePath();x.fill();
- // Bacon muscular arms / others slimmer
- x.strokeStyle=isS?"#c9967d":"#b98567";x.lineWidth=isB?11:7;x.beginPath();x.moveTo(shoulder-3,-39);x.lineTo(22+armSwing-recoil,-30);x.stroke();
+ // Bacon muscular arms / others slimmer\n x.save();x.translate(shoulder-3,-39);x.rotate(aimAngle);x.translate(-(shoulder-3),39);\n x.strokeStyle=isS?"#c9967d":"#b98567";x.lineWidth=isB?11:7;x.beginPath();x.moveTo(shoulder-3,-39);x.lineTo(22+armSwing-recoil,-30);x.stroke();
  if(isB){x.beginPath();x.arc(-18,-36,6,0,Math.PI*2);x.fillStyle="#b98567";x.fill()}
  // head
  x.fillStyle=isS?"#d2a084":"#c58f70";x.beginPath();x.arc(0,-54,isB?11:10,0,Math.PI*2);x.fill();
@@ -142,7 +141,7 @@ function draw(){
  // muzzle flash and movement dust
  if(recoil>1){x.fillStyle="#ffd77a";x.globalAlpha=.8;x.beginPath();x.moveTo(isB?58:48,-32);x.lineTo(isB?75:62,-39);x.lineTo(isB?68:57,-30);x.lineTo(isB?76:63,-24);x.closePath();x.fill();x.globalAlpha=1}
  if(p.on&&moving&&Math.abs(phase)>.82){x.fillStyle="#b9b0a255";x.beginPath();x.arc(-18,2,5,0,7);x.arc(-27,1,3,0,7);x.fill()}
- // face highlight + rim
+ x.restore();\n // face highlight + rim
  x.fillStyle="#1b1513";x.beginPath();x.arc(5,-54,1.4,0,7);x.fill();x.strokeStyle=body;x.globalAlpha=.55;x.lineWidth=2;x.beginPath();x.arc(-1,-54,13,2.5,5.4);x.stroke();x.globalAlpha=1;x.restore();
  x.restore();
  let m=1+Math.floor(g.t/45)*.25+(D-1)*.5;ui.name.textContent=g.hero.name+" · "+g.hero.skill;ui.hp.textContent="HP "+Math.ceil(p.hp)+"/"+p.max;ui.coins.textContent="Beute "+g.coins+" ⬡";ui.mult.textContent="Risiko ×"+m.toFixed(2);ui.quest.textContent=g.done?"✓ Extrahiere am Portal":"Jagd "+g.kills+"/10 · Kristalle "+g.crystals+"/3";
